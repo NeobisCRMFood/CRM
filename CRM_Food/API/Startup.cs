@@ -35,6 +35,8 @@ namespace API
                {
                    c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
                });
+
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,7 +52,10 @@ namespace API
             }
 
             app.UseHttpsRedirection();
+
             app.UseMvc();
+
+            app.UseCors(buidler => buidler.AllowAnyOrigin());
 
             app.UseSwagger();
             app.UseSwaggerUI(c => 
