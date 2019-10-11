@@ -6,13 +6,14 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
-namespace API.Controllers
+namespace API.Controllers.ControllerWork
 {
     [Route("api/[controller]")]
     [ApiController]
