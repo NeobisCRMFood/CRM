@@ -21,7 +21,14 @@ namespace DataTier.Entities.Abstract
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=FoodDb;Trusted_Connection=True");
+            optionsBuilder.UseNpgsql
+                (
+                "Host=satao.db.elephantsql.com;" +
+                "Port=5432;" +
+                "Database=bomosrkc;" +
+                "Username=bomosrkc;" +
+                "Password=DtoD5_DP3-_0qtyQ8rnY-jll5Z3Tel2K;"
+                );
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
