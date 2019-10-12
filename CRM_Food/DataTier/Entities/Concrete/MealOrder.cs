@@ -11,7 +11,12 @@ namespace DataTier.Entities.Concrete
         public int MealId { get; set; }
         public Meal Meal { get; set; }
         public int Quantity { get; set; }
-        public int MealOrderStatusId { get; set; }
+        private int? mealOrderStatusId;
+        public int MealOrderStatusId
+        {
+            get { return mealOrderStatusId ?? 3; }
+            set { mealOrderStatusId = value; }
+        }
         public MealOrderStatus MealOrderStatus { get; set; }
     }
 }

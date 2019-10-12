@@ -23,9 +23,17 @@ namespace API.Controllers
 
         // GET: api/Categories
         [HttpGet]
-        public IEnumerable<Category> GetCategories()
+        public IQueryable GetCategories()
         {
-            return _context.Categories;
+            var categories = _context.Categories.Select(c => new
+            {
+                Id = c.Id,
+                DepartmentId = c.DepartmentId,
+                DepartmentName = c.Department.Name,
+                Category = c.Name,
+                Meals = c.Meals
+            });
+            return categories;
         }
 
         // GET: api/Categories/5

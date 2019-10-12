@@ -69,6 +69,8 @@ namespace API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            app.UseCors("MyPolicy");
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -83,15 +85,11 @@ namespace API
             app.UseAuthentication();
             app.UseMvc();
 
-            app.UseCors(buidler => buidler.AllowAnyOrigin());
-
             app.UseSwagger();
             app.UseSwaggerUI(c => 
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Food CRM API");
             });
-
-            app.UseCors("MyPolicy");
         }
     }
 }
