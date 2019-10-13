@@ -1,4 +1,5 @@
-﻿using DataTier.Entities.Abstract;
+﻿using API.Models;
+using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ namespace API.Controllers.ControllerWork
                 comment = o.Comment,
                 mealsList = o.MealOrders.Select(mo => new
                 {
+                    mealId = mo.MealId,
                     mealName = mo.Meal.Name,
                     status = mo.MealOrderStatus.Name
                 }),
@@ -37,7 +39,28 @@ namespace API.Controllers.ControllerWork
             return orders;
         }
 
-        [HttpPut("{id}")]
+        [HttpPost]
+        public async Task<IActionResult> CloseMeal([FromBody]MealReadyModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var order = await _context.Orders.Include(o => o.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
+            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
+
+            if (order != null && meal != null)
+            {
+                var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
+                mealOrder.MealOrderStatusId = 2;
+                _context.Entry(mealOrder).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+            }
+            return NoContent();
+        }
+
+        [HttpPost("{id}")]
         public async Task<IActionResult> CloseOrder([FromRoute]int id)
         {
             if (!ModelState.IsValid)

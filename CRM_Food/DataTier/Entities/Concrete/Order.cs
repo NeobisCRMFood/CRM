@@ -22,9 +22,11 @@ namespace DataTier.Entities.Concrete
             get { return dateTimeOrdered ?? DateTime.Now; }
             set { dateTimeOrdered = value; }
         }
+        [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
 
         private int? orderStatusId;
+        [JsonIgnore]
         public int OrderStatusId
         {
             get { return orderStatusId ?? 1; }

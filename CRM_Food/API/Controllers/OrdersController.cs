@@ -21,7 +21,6 @@ namespace API.Controllers
             _context = context;
         }
 
-        // GET: api/Orders
         [HttpGet]
         public IQueryable GetOrders()
         {
@@ -111,7 +110,8 @@ namespace API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            }
+            };
+            
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
