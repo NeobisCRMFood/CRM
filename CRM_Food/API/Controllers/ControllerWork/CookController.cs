@@ -24,16 +24,16 @@ namespace API.Controllers.ControllerWork
         {
             var orders = _context.Orders.Where(o => o.OrderStatusId == 1).Select(o => new
             {
-                Id = o.Id,
-                DateTimeOrdered = o.DateTimeOrdered,
-                Comment = o.Comment,
-                MealsList = o.MealOrders.Select(mo => new
+                id = o.Id,
+                dateTimeOrdered = o.DateTimeOrdered,
+                comment = o.Comment,
+                mealsList = o.MealOrders.Select(mo => new
                 {
                     mealName = mo.Meal.Name,
                     status = mo.MealOrderStatus.Name
                 }),
                 OrderStatus = o.OrderStatus.Name,
-            }).OrderBy(o => o.DateTimeOrdered);
+            }).OrderBy(o => o.dateTimeOrdered);
             return orders;
         }
 

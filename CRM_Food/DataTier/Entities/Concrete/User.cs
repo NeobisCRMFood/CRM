@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,6 +7,7 @@ namespace DataTier.Entities.Concrete
 {
     public class User
     {
+        [JsonIgnore]
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -15,11 +17,18 @@ namespace DataTier.Entities.Concrete
         public string PhoneNumber { get; set; }
         public string Login { get; set; }
         public string Password { get; set; }
-        public DateTime StartWorkDay { get; set; }
+        private DateTime? startWorkDay;
+        public DateTime StartWorkDay
+        {
+            get { return startWorkDay ?? DateTime.Now; }
+            set { startWorkDay = value; }
+        }
         public int RoleId { get; set; }
+        [JsonIgnore]
         public Role Role { get; set; }
         public string Comment { get; set; }
 
+        [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
         public User()
         {
