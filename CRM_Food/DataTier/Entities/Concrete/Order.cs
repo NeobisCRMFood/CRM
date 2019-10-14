@@ -34,7 +34,7 @@ namespace DataTier.Entities.Concrete
         }
         [JsonIgnore]
         public OrderStatus OrderStatus { get; set; }
-        public decimal TotalPrice { get; set; }
+        public decimal? TotalPrice { get; set; }
         public string Comment { get; set; }
         public ICollection<MealOrder> MealOrders { get; set; }
         public Order()

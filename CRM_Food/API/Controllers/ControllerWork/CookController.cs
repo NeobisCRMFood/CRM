@@ -32,6 +32,7 @@ namespace API.Controllers.ControllerWork
                 {
                     mealId = mo.MealId,
                     mealName = mo.Meal.Name,
+                    quantity = mo.Quantity,
                     status = mo.MealOrderStatus.Name
                 }),
                 OrderStatus = o.OrderStatus.Name,

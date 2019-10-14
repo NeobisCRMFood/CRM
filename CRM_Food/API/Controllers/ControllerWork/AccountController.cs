@@ -11,13 +11,14 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController : BaseController
     {
         private EFDbContext _context;
 
@@ -66,6 +67,7 @@ namespace API.Controllers.ControllerWork
             {
                 var claims = new List<Claim>
                 {
+                    new Claim("UserId", user.Id.ToString()),
                     new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
                     new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.Name)
                 };

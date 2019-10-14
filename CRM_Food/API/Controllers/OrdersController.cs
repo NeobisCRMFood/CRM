@@ -1,18 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using API.Controllers.ControllerWork;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OrdersController : ControllerBase
+    public class OrdersController : BaseController
     {
         private readonly EFDbContext _context;
 
@@ -43,7 +44,12 @@ namespace API.Controllers
                     orderStatus = o.OrderStatus.Name,
                     totalPrice = o.TotalPrice,
                     comment = o.Comment,
-                    meals = o.MealOrders
+                    meals = o.MealOrders.Select(mo => new
+                    {
+                        mealName = mo.Meal.Name,
+                        mealPrice = mo.Meal.Price,
+                        quantity = mo.Quantity,
+                    })
                 });
             return orders;
         }
@@ -80,7 +86,6 @@ namespace API.Controllers
             {
                 return BadRequest();
             }
-            
             _context.Entry(order).State = EntityState.Modified;
 
             try
@@ -103,7 +108,6 @@ namespace API.Controllers
             return NoContent();
         }
 
-        // POST: api/Orders
         [HttpPost]
         public async Task<IActionResult> PostOrder([FromBody] Order order)
         {
@@ -111,12 +115,28 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             };
-            
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
-
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);
         }
+
+        //Осуществление заказа авторизированного пользователя
+        // POST: api/Orders
+        //[Authorize(Roles = "waiter")]
+        //[HttpPost]
+        //public async Task<IActionResult> PostOrder([FromBody] Order order)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    };
+            
+        //    order.UserId = GetUserId();
+        //    _context.Orders.Add(order);
+        //    await _context.SaveChangesAsync();
+
+        //    return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+        //}
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]
