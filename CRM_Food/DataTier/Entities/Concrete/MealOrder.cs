@@ -7,7 +7,7 @@ namespace DataTier.Entities.Concrete
 {
     public class MealOrder
     {
-        [JsonIgnore]
+        //[JsonIgnore]
         public int OrderId { get; set; }
         [JsonIgnore]
         public Order Order { get; set; }
@@ -19,7 +19,7 @@ namespace DataTier.Entities.Concrete
         [JsonIgnore]
         public int MealOrderStatusId
         {
-            get { return mealOrderStatusId ?? 3; }
+            get { return mealOrderStatusId ?? 1; }
             set { mealOrderStatusId = value; }
         }
         [JsonIgnore]

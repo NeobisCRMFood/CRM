@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/Roles
         [HttpGet]
-        public IEnumerable<Role> GetRoles()
+        public IQueryable GetRoles()
         {
-            return _context.Roles;
+            var roles = _context.Roles.Select(r => new
+            {
+                id = r.Id,
+                name = r.Name
+            });
+            return roles;
         }
 
         // GET: api/Roles/5

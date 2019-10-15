@@ -17,12 +17,7 @@ namespace DataTier.Entities.Concrete
         public string PhoneNumber { get; set; }
         public string Login { get; set; }
         public string Password { get; set; }
-        private DateTime? startWorkDay;
-        public DateTime StartWorkDay
-        {
-            get { return startWorkDay ?? DateTime.Now; }
-            set { startWorkDay = value; }
-        }
+        public DateTime StartWorkDay { get; set; }
         public int RoleId { get; set; }
         [JsonIgnore]
         public Role Role { get; set; }

@@ -2,6 +2,7 @@
 using API.Models;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
+    [Authorize(Roles = "cook")]
     [Route("api/[controller]")]
     [ApiController]
     public class CookController : ControllerBase
@@ -23,6 +25,7 @@ namespace API.Controllers.ControllerWork
             _hubContext = hubContext;
         }
 
+        [Route("getActiveOrders")]
         [HttpGet]
         public IQueryable ActiveOrders()
         {
@@ -43,18 +46,18 @@ namespace API.Controllers.ControllerWork
             return orders;
         }
 
+        [Route("closeMeal")]
         [HttpPost]
-        public async Task<IActionResult> CloseMeal([FromBody]MealReadyModel model)
+        public async Task<IActionResult> CloseMeal([FromBody]MealReady model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var order = await _context.Orders.Include(o => o.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
+            var order = await _context.Orders.Include(mo => mo.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
-            
-            
+
             if (order != null && meal != null)
             {
                 var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
@@ -63,51 +66,13 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
 
                 var userId = User.Claims.First(i => i.Type == "UserId").Value;
-                if (User.IsInRole("waiter") && int.Parse(userId) == order.UserId)
+                if (int.Parse(userId) == order.UserId)
                 {
                     string message = $"Стол: {order.Table.Name}, Блюдо: {order.MealOrders.Select(mo => mo.Meal.Name)}";
                     await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
                 }
             }
             return NoContent();
-        }
-
-        [HttpPost("{id}")]
-        public async Task<IActionResult> CloseOrder([FromRoute]int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            Order order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
-            if (order == null)
-            {
-                return BadRequest();
-            }
-            order.OrderStatusId = 2;
-            order.DateTimeClosed = DateTime.Now;
-            _context.Entry(order).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.Id == id);
         }
     }
 }

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace API.Models
 {
-    public class MealReadyModel
+    public class ChequeModel
     {
         public int OrderId { get; set; }
-        public int MealId { get; set; }
+        public int TotalPrice { get; set; }
     }
 }

@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public IEnumerable<User> GetUsers()
+        public IQueryable GetUsers()
         {
-            return _context.Users;
+            var users = _context.Users.Select(u => new
+            {
+                id = u.Id,
+                name = u.FirstName + " " + u.LastName
+            });
+            return users;
         }
 
         // GET: api/Users/5

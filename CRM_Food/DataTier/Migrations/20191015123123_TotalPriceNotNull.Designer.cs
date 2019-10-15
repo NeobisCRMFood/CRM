@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataTier.Migrations
 {
     [DbContext(typeof(EFDbContext))]
-    [Migration("20191013131331_TotalPrice")]
-    partial class TotalPrice
+    [Migration("20191015123123_TotalPriceNotNull")]
+    partial class TotalPriceNotNull
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -119,7 +119,7 @@ namespace DataTier.Migrations
 
                     b.Property<int>("TableId");
 
-                    b.Property<decimal?>("TotalPrice");
+                    b.Property<decimal>("TotalPrice");
 
                     b.Property<int>("UserId");
 

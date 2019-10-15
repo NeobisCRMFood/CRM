@@ -2,18 +2,9 @@
 
 namespace DataTier.Migrations
 {
-    public partial class TotalPrice : Migration
+    public partial class TotalPriceNotNull : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.AlterColumn<decimal>(
-                name: "TotalPrice",
-                table: "Orders",
-                nullable: true,
-                oldClrType: typeof(decimal));
-        }
-
-        protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<decimal>(
                 name: "TotalPrice",
@@ -21,6 +12,15 @@ namespace DataTier.Migrations
                 nullable: false,
                 oldClrType: typeof(decimal),
                 oldNullable: true);
+        }
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<decimal>(
+                name: "TotalPrice",
+                table: "Orders",
+                nullable: true,
+                oldClrType: typeof(decimal));
         }
     }
 }

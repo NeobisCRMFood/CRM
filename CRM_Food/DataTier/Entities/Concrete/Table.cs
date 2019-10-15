@@ -9,8 +9,8 @@ namespace DataTier.Entities.Concrete
     {
         [JsonIgnore]
         public int Id { get; set; }
-        
         public string Name { get; set; }
+        public bool IsBusy { get; set; }
 
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; }

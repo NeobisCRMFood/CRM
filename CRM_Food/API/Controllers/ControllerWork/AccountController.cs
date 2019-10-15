@@ -28,7 +28,7 @@ namespace API.Controllers.ControllerWork
         }
         
         [HttpPost]
-        [Route("Token")]
+        [Route("Login")]
         public async Task Token([FromBody] LoginModel authUser)
         {
             var identity = GetIdentity(authUser.Login, authUser.Password);
