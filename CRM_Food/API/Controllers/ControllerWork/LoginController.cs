@@ -11,13 +11,13 @@ namespace API.Controllers.ControllerWork
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class LoginController : BaseController
+    public class LoginController : ControllerBase
     {
         [Authorize(Roles = "admin")]
         [HttpGet]
         public IActionResult GetLogin()
         {
-            return Ok($"Ваш логин: {User.Identity.Name}, Id {GetUserId()}");
+            return Ok($"Ваш логин: {User.Identity.Name}, Id: {User.Claims.First(i => i.Type == "UserId").Value}");
         }
     }
 }

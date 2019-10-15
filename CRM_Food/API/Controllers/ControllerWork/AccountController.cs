@@ -18,7 +18,7 @@ namespace API.Controllers.ControllerWork
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : BaseController
+    public class AccountController : ControllerBase
     {
         private EFDbContext _context;
 
