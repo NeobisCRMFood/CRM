@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using API.Models;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Http;
@@ -11,8 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Security.Principal;
+using System.Threading.Tasks;
 
-namespace API.Controllers
+namespace API.Controllers.ControllerWork
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -27,7 +29,7 @@ namespace API.Controllers
         
         [HttpPost]
         [Route("Token")]
-        public async Task Token([FromBody] User authUser)
+        public async Task Token([FromBody] LoginModel authUser)
         {
             var identity = GetIdentity(authUser.Login, authUser.Password);
             if (identity == null)
@@ -65,6 +67,7 @@ namespace API.Controllers
             {
                 var claims = new List<Claim>
                 {
+                    new Claim("UserId", user.Id.ToString()),
                     new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
                     new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.Name)
                 };

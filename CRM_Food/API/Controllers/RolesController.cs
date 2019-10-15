@@ -9,7 +9,7 @@ using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 
 namespace API.Controllers
-{
+{ 
     [Route("api/[controller]")]
     [ApiController]
     public class RolesController : ControllerBase
