@@ -1,22 +1,19 @@
-﻿using API.Controllers.ControllerWork;
-using DataTier.Entities.Abstract;
+﻿using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OrdersController : BaseController
+    public class OrdersController : ControllerBase
     {
         private readonly EFDbContext _context;
-
         public OrdersController(EFDbContext context)
         {
             _context = context;
@@ -108,21 +105,6 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PostOrder([FromBody] Order order)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            };
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-        }
-
-        //Осуществление заказа авторизированного пользователя
-        // POST: api/Orders
-        //[Authorize(Roles = "waiter")]
         //[HttpPost]
         //public async Task<IActionResult> PostOrder([FromBody] Order order)
         //{
@@ -130,13 +112,27 @@ namespace API.Controllers
         //    {
         //        return BadRequest(ModelState);
         //    };
-            
-        //    order.UserId = GetUserId();
         //    _context.Orders.Add(order);
         //    await _context.SaveChangesAsync();
-
         //    return CreatedAtAction("GetOrder", new { id = order.Id }, order);
         //}
+
+        //Осуществление заказа авторизированного пользователя
+        // POST: api/Orders
+        [Authorize(Roles = "waiter")]
+        [HttpPost]
+        public async Task<IActionResult> PostOrder([FromBody] Order order)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            };
+            var userId = User.Claims.First(i => i.Type == "UserId").Value;
+            order.UserId = int.Parse(userId);
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+        }
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]

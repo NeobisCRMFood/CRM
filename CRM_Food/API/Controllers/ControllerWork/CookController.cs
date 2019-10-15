@@ -1,7 +1,9 @@
-﻿using API.Models;
+﻿using API.Hubs;
+using API.Models;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -13,11 +15,12 @@ namespace API.Controllers.ControllerWork
     [ApiController]
     public class CookController : ControllerBase
     {
-        private EFDbContext _context;
-
-        public CookController(EFDbContext context)
+        private readonly EFDbContext _context;
+        private readonly IHubContext<OrderHub> _hubContext;
+        public CookController(EFDbContext context, IHubContext<OrderHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -50,13 +53,21 @@ namespace API.Controllers.ControllerWork
 
             var order = await _context.Orders.Include(o => o.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
-
+            
+            
             if (order != null && meal != null)
             {
                 var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
                 mealOrder.MealOrderStatusId = 2;
                 _context.Entry(mealOrder).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
+
+                var userId = User.Claims.First(i => i.Type == "UserId").Value;
+                if (User.IsInRole("waiter") && int.Parse(userId) == order.UserId)
+                {
+                    string message = $"Стол: {order.Table.Name}, Блюдо: {order.MealOrders.Select(mo => mo.Meal.Name)}";
+                    await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+                }
             }
             return NoContent();
         }

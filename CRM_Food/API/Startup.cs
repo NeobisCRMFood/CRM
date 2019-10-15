@@ -1,4 +1,5 @@
-﻿using DataTier.Entities.Abstract;
+﻿using API.Hubs;
+using DataTier.Entities.Abstract;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -49,7 +50,7 @@ namespace API
                         ValidateIssuerSigningKey = true
                     };
                 });
-
+            services.AddSignalR();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddJsonOptions(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
@@ -81,7 +82,10 @@ namespace API
             }
 
             app.UseHttpsRedirection();
-
+            app.UseSignalR(routes => 
+            {
+                routes.MapHub<OrderHub>("/order");
+            });
             app.UseAuthentication();
             app.UseMvc();
 
