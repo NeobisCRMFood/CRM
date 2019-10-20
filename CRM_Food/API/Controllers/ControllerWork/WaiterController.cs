@@ -2,34 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ControllerWork
 {
-    [Authorize(Roles = "waiter")]
+    //[Authorize(Roles = "waiter")]
     [Route("api/[controller]")]
     [ApiController]
     public class WaiterController : ControllerBase
     {
         private readonly EFDbContext _context;
-        public WaiterController(EFDbContext context)
+        private readonly IHubContext<OrderHub> _hubContext;
+        public WaiterController(EFDbContext context, IHubContext<OrderHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [Route("getOrders")]
         [HttpGet]
         public IQueryable GetOrders()
         {
-            List<Order> orderList = new List<Order>();
             var orders = _context.Orders
-                .Where(o => o.UserId == GetUserId())
+                //.Where(o => o.UserId == GetUserId())
                 .Where(o => o.OrderStatusId == 1)
                 .Select(o => new
                 {
@@ -45,7 +47,6 @@ namespace API.Controllers.ControllerWork
             return orders;
         }
 
-        [Route("getOrder")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder([FromRoute] int id)
         {
@@ -64,6 +65,15 @@ namespace API.Controllers.ControllerWork
         [Route("getTables")]
         [HttpGet]
         public IQueryable GetTables()
+        {
+            var tables = _context.Tables
+                .Select(t => new { id = t.Id, name = t.Name });
+            return tables;
+        }
+
+        [Route("getFreeTables")]
+        [HttpGet]
+        public IQueryable GetFreeTables()
         {
             var tables = _context.Tables
                 .Where(t => t.IsBusy == false)
@@ -105,11 +115,23 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(ModelState);
             };
-            var userId = User.Claims.First(i => i.Type == "UserId").Value;
-            order.UserId = int.Parse(userId);
-            order.Table.IsBusy = true;
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                //var userId = User.Claims.First(i => i.Type == "UserId").Value;
+                //order.UserId = int.Parse(userId);
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+                var ord = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == order.Id);
+                ord.Table.IsBusy = true;
+                await _context.SaveChangesAsync();
+                //var userId = User.Claims.First(i => i.Type == "UserId").Value;
+                //if (int.Parse(userId) == ord.UserId)
+                //{
+                //    await _hubContext.Clients.User(userId).SendAsync($"Notify", "Поступил заказ");
+                //}
+                transaction.Commit();
+            }
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);
         }
 

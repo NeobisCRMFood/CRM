@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
-    [Authorize(Roles = "cook")]
+    //[Authorize(Roles = "cook")]
     [Route("api/[controller]")]
     [ApiController]
     public class CookController : ControllerBase
@@ -60,17 +60,22 @@ namespace API.Controllers.ControllerWork
 
             if (order != null && meal != null)
             {
-                var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
-                mealOrder.MealOrderStatusId = 2;
-                _context.Entry(mealOrder).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-
-                var userId = User.Claims.First(i => i.Type == "UserId").Value;
-                if (int.Parse(userId) == order.UserId)
+                using (var transaction = _context.Database.BeginTransaction())
                 {
-                    string message = $"Стол: {order.Table.Name}, Блюдо: {order.MealOrders.Select(mo => mo.Meal.Name)}";
-                    await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+                    var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
+                    mealOrder.MealOrderStatusId = 2;
+                    _context.Entry(mealOrder).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+
+                    //var userId = User.Claims.First(i => i.Type == "UserId").Value;
+                    //if (int.Parse(userId) == order.UserId)
+                    //{
+                    //    string message = $"Стол: {order.Table.Name}, Блюдо: {order.MealOrders.Select(mo => mo.Meal.Name)}";
+                    //    await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+                    //}
+                    transaction.Commit();
                 }
+
             }
             return NoContent();
         }

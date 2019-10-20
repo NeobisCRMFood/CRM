@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Newtonsoft.Json;
 namespace DataTier.Entities.Concrete
@@ -8,6 +9,7 @@ namespace DataTier.Entities.Concrete
     {
         [JsonIgnore]
         public int Id { get; set; }
+        [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
         public int DepartmentId { get; set; }
         [JsonIgnore]

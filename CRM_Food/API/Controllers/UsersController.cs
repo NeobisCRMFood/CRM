@@ -28,7 +28,18 @@ namespace API.Controllers
             var users = _context.Users.Select(u => new
             {
                 id = u.Id,
-                name = u.FirstName + " " + u.LastName
+                firstName = u.FirstName,
+                lastName = u.LastName,
+                middleName = u.MiddleName,
+                gender = u.Gender,
+                dateBorn = u.DateBorn,
+                phoneNumber = u.PhoneNumber,
+                login = u.Login,
+                password = u.Password,
+                startWorkDate = u.StartWorkDay,
+                roleId = u.RoleId,
+                roleName = u.Role.Name,
+                comment = u.Comment
             });
             return users;
         }

@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/OrderStatus
         [HttpGet]
-        public IEnumerable<OrderStatus> GetOrderStatuses()
+        public IQueryable GetOrderStatuses()
         {
-            return _context.OrderStatuses;
+            var statuses = _context.OrderStatuses.Select(s => new
+            {
+                id = s.Id,
+                name = s.Name
+            });
+            return statuses;
         }
 
         // GET: api/OrderStatus/5

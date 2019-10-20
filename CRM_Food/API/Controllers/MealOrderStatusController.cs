@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/MealOrderStatus
         [HttpGet]
-        public IEnumerable<MealOrderStatus> GetMealOrderStatuses()
+        public IQueryable GetMealOrderStatuses()
         {
-            return _context.MealOrderStatuses;
+            var statuses = _context.MealOrderStatuses.Select(s => new
+            {
+                id = s.Id,
+                name = s.Name
+            });
+            return statuses;
         }
 
         // GET: api/MealOrderStatus/5

@@ -30,8 +30,7 @@ namespace API.Controllers
                 Id = c.Id,
                 DepartmentId = c.DepartmentId,
                 DepartmentName = c.Department.Name,
-                Category = c.Name,
-                Meals = c.Meals
+                Category = c.Name
             });
             return categories;
         }
