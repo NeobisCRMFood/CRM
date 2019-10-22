@@ -132,7 +132,7 @@ namespace API.Controllers.ControllerWork
                 //}
                 transaction.Commit();
             }
-            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+            return Ok();
         }
 
         [Route("addMealToOrder")]

@@ -11,8 +11,9 @@ namespace DataTier.Entities.Concrete
         [JsonIgnore]
         public int Id { get; set; }
         public int CategoryId { get; set; }
-        [Required(ErrorMessage = "Заполните название")]
+        [JsonIgnore]
         public Category Category { get; set; }
+        [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
         [Required(ErrorMessage = "Заполните описание")]
         public string Description { get; set; }

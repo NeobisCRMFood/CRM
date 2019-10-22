@@ -27,7 +27,7 @@ namespace DataTier.Entities.Abstract
                 "Port=5432;" +
                 "Database=bomosrkc;" +
                 "Username=bomosrkc;" +
-                "Password=DtoD5_DP3-_0qtyQ8rnY-jll5Z3Tel2K;"
+                "Password=oc91IlmMSO1nBq81KCylj0FpnCZk-n0X;"
                 );
         }
 

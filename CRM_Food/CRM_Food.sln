@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "API\API.csproj", "{8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataTier", "DataTier\DataTier.csproj", "{DDA6E69C-5B5D-412B-AF9C-2AA98EC2E923}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xUnitAPI", "xUnitAPI\xUnitAPI.csproj", "{56920615-C914-4FD7-9641-206FF5462483}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{DDA6E69C-5B5D-412B-AF9C-2AA98EC2E923}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDA6E69C-5B5D-412B-AF9C-2AA98EC2E923}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDA6E69C-5B5D-412B-AF9C-2AA98EC2E923}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56920615-C914-4FD7-9641-206FF5462483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56920615-C914-4FD7-9641-206FF5462483}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56920615-C914-4FD7-9641-206FF5462483}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56920615-C914-4FD7-9641-206FF5462483}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
