@@ -16,6 +16,7 @@ namespace DataTier.Entities.Concrete
         public string Name { get; set; }
 
         public TableStatus Status { get; set; }
+        public DateTime? BookDate { get; set; }
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
         public Table()

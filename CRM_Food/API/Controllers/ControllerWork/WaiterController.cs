@@ -119,16 +119,24 @@ namespace API.Controllers.ControllerWork
             {
                 //var userId = User.Claims.First(i => i.Type == "UserId").Value;
                 //order.UserId = int.Parse(userId);
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-                var ord = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == order.Id);
-                ord.Table.Status = TableStatus.Busy;
-                await _context.SaveChangesAsync();
-                //var userId = User.Claims.First(i => i.Type == "UserId").Value;
-                //if (int.Parse(userId) == ord.UserId)
-                //{
-                //    await _hubContext.Clients.User(userId).SendAsync($"Notify", "Поступил заказ");
-                //}
+                var table = _context.Tables.FirstOrDefault(t => t.Id == order.TableId);
+                if (table.Status == TableStatus.Free)
+                {
+                    _context.Orders.Add(order);
+                    await _context.SaveChangesAsync();
+                    var ord = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == order.Id);
+                    ord.Table.Status = TableStatus.Busy;
+                    await _context.SaveChangesAsync();
+                    //var userId = User.Claims.First(i => i.Type == "UserId").Value;
+                    //if (int.Parse(userId) == ord.UserId)
+                    //{
+                    //    await _hubContext.Clients.User(userId).SendAsync($"Notify", "Поступил заказ");
+                    //}
+                }
+                else
+                {
+                    return BadRequest();
+                }
                 transaction.Commit();
             }
             return Ok();
