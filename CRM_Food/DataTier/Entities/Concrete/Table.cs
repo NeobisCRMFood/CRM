@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataTier.Entities.Abstract;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,7 +15,7 @@ namespace DataTier.Entities.Concrete
         [Required(ErrorMessage = "Заполните имя")]
         public string Name { get; set; }
 
-        public bool IsBusy { get; set; }
+        public TableStatus Status { get; set; }
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
         public Table()

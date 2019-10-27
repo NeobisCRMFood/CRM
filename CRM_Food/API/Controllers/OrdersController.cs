@@ -112,7 +112,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             };
-            order.Table.IsBusy = true;
+            order.Table.Status = TableStatus.Busy;
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);

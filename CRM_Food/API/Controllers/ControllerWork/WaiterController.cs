@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Hubs;
@@ -76,7 +75,7 @@ namespace API.Controllers.ControllerWork
         public IQueryable GetFreeTables()
         {
             var tables = _context.Tables
-                .Where(t => t.IsBusy == false)
+                .Where(t => t.Status == TableStatus.Free)
                 .Select(t => new { id = t.Id, name = t.Name});
             return tables;
         }
@@ -123,7 +122,7 @@ namespace API.Controllers.ControllerWork
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 var ord = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == order.Id);
-                ord.Table.IsBusy = true;
+                ord.Table.Status = TableStatus.Busy;
                 await _context.SaveChangesAsync();
                 //var userId = User.Claims.First(i => i.Type == "UserId").Value;
                 //if (int.Parse(userId) == ord.UserId)
@@ -169,10 +168,10 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest();
             }
-            order.OrderStatusId = 3;
+            order.OrderStatusId = 2;
             order.TotalPrice = model.TotalPrice;
-            order.DateTimeClosed = DateTime.Now;
-            order.Table.IsBusy = false;
+            order.DateTimeClosed = DateTime.UtcNow;
+            order.Table.Status = TableStatus.Free;
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return CreatedAtAction("getOrder", new { id = order.Id }, order);

@@ -20,7 +20,7 @@ namespace DataTier.Entities.Concrete
         [JsonIgnore]
         public DateTime DateTimeOrdered
         {
-            get { return dateTimeOrdered ?? DateTime.Now; }
+            get { return dateTimeOrdered ?? DateTime.UtcNow; }
             set { dateTimeOrdered = value; }
         }
         [JsonIgnore]
