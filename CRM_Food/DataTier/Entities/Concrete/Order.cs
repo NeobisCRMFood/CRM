@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataTier.Entities.Abstract;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -25,13 +26,6 @@ namespace DataTier.Entities.Concrete
         }
         [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
-        private int? orderStatusId;
-        [JsonIgnore]
-        public int OrderStatusId
-        {
-            get { return orderStatusId ?? 1; }
-            set { orderStatusId = value; }
-        }
         [JsonIgnore]
         public OrderStatus OrderStatus { get; set; }
         public decimal TotalPrice { get; set; }

@@ -8,27 +8,26 @@ namespace DataTier.Entities.Abstract
 {
     public class EFDbContext : DbContext
     {
-        public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Table> Tables { get; set; }
-        public DbSet<OrderStatus> OrderStatuses { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Meal> Meals { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<MealOrderStatus> MealOrderStatuses { get; set; }
         public DbSet<MealOrder> MealOrders { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql
-                (
-                "Host=satao.db.elephantsql.com;" +
-                "Port=5432;" +
-                "Database=bomosrkc;" +
-                "Username=bomosrkc;" +
-                "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
-                );
+            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FoodCRM;Trusted_Connection=True;");
+
+            //optionsBuilder.UseNpgsql
+            //    (
+            //    "Host=satao.db.elephantsql.com;" +
+            //    "Port=5432;" +
+            //    "Database=bomosrkc;" +
+            //    "Username=bomosrkc;" +
+            //    "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+            //    );
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

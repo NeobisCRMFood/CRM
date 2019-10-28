@@ -27,9 +27,9 @@ namespace API.Controllers.ControllerWork
 
         [Route("getActiveOrders")]
         [HttpGet]
-        public IQueryable ActiveOrders()
+        public IActionResult ActiveOrders()
         {
-            var orders = _context.Orders.Where(o => o.OrderStatusId == 1).Select(o => new
+            var orders = _context.Orders.Where(o => o.OrderStatus == OrderStatus.Active).Select(o => new
             {
                 id = o.Id,
                 dateTimeOrdered = o.DateTimeOrdered,
@@ -39,11 +39,12 @@ namespace API.Controllers.ControllerWork
                     mealId = mo.MealId,
                     mealName = mo.Meal.Name,
                     quantity = mo.Quantity,
-                    status = mo.MealOrderStatus.Name
+                    statusId = mo.MealOrderStatus,
+                    status = mo.MealOrderStatus.ToString()
                 }),
-                OrderStatus = o.OrderStatus.Name,
+                OrderStatus = o.OrderStatus.ToString(),
             }).OrderBy(o => o.dateTimeOrdered);
-            return orders;
+            return Ok(orders);
         }
 
         [Route("closeMeal")]
@@ -63,7 +64,7 @@ namespace API.Controllers.ControllerWork
                 using (var transaction = _context.Database.BeginTransaction())
                 {
                     var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
-                    mealOrder.MealOrderStatusId = 2;
+                    mealOrder.MealOrderStatus = MealOrderStatus.Ready;
                     _context.Entry(mealOrder).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 

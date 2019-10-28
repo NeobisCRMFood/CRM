@@ -62,14 +62,14 @@ namespace API.Controllers.ControllerWork
 
         private ClaimsIdentity GetIdentity(string login, string password)
         {
-            User user = _context.Users.Include(u => u.Role).FirstOrDefault(u => u.Login == login && u.Password == password);
+            User user = _context.Users.FirstOrDefault(u => u.Login == login && u.Password == password);
             if (user != null)
             {
                 var claims = new List<Claim>
                 {
                     new Claim("UserId", user.Id.ToString()),
                     new Claim(ClaimsIdentity.DefaultNameClaimType, user.Login),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.Name)
+                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.ToString())
                 };
                 ClaimsIdentity claimsIdentity =
                     new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,

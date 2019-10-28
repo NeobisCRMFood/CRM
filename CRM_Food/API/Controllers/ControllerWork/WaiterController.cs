@@ -27,11 +27,11 @@ namespace API.Controllers.ControllerWork
 
         [Route("getOrders")]
         [HttpGet]
-        public IQueryable GetOrders()
+        public IActionResult GetOrders()
         {
             var orders = _context.Orders
                 //.Where(o => o.UserId == GetUserId())
-                .Where(o => o.OrderStatusId == 1)
+                .Where(o => o.OrderStatus == OrderStatus.Active)
                 .Select(o => new
                 {
                     id = o.Id,
@@ -43,7 +43,7 @@ namespace API.Controllers.ControllerWork
                         quantity = mo.Quantity
                     })
                 });
-            return orders;
+            return Ok(orders);
         }
 
         [HttpGet("{id}")]
@@ -63,26 +63,26 @@ namespace API.Controllers.ControllerWork
 
         [Route("getTables")]
         [HttpGet]
-        public IQueryable GetTables()
+        public IActionResult GetTables()
         {
             var tables = _context.Tables
                 .Select(t => new { id = t.Id, name = t.Name });
-            return tables;
+            return Ok(tables);
         }
 
         [Route("getFreeTables")]
         [HttpGet]
-        public IQueryable GetFreeTables()
+        public IActionResult GetFreeTables()
         {
             var tables = _context.Tables
                 .Where(t => t.Status == TableStatus.Free)
                 .Select(t => new { id = t.Id, name = t.Name});
-            return tables;
+            return Ok(tables);
         }
 
         [Route("getMenu")]
         [HttpGet]
-        public IQueryable Get_menu()
+        public IActionResult Get_menu()
         {
             var menu = _context.Departments
                 .Include(c => c.Categories)
@@ -103,7 +103,95 @@ namespace API.Controllers.ControllerWork
                         })
                     })
                 });
-            return menu;
+            return Ok(menu);
+        }
+
+        [Route("GetWaiterStatistics")]
+        [HttpGet]
+        public IActionResult GetWaiterStatistics()
+        {
+            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            {
+                orderCount = u.Orders.Count(),
+                totalSum = u.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Select(o => o.TotalPrice).Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("GetWaiterStatisticsToday")]
+        [HttpGet]
+        public IActionResult GetWaiterStatisticsToday()
+        {
+            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.Today)
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.Today)
+                .Select(o => o.TotalPrice).Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("GetWaiterStatisticsWeek")]
+        [HttpGet]
+        public IActionResult GetWaiterStatisticsWeek()
+        {
+            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Select(o => o.TotalPrice).Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("GetWaiterStatisticsMonth")]
+        [HttpGet]
+        public IActionResult GetWaiterStatisticsMonth()
+        {
+            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Select(o => o.TotalPrice).Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("GetWaiterStatisticsRange")]
+        [HttpPost]
+        public IActionResult GetWaiterStatisticsRange([FromBody] DateRange model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= o.DateTimeClosed)
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
         }
 
         [Route("createOrder")]
@@ -176,7 +264,7 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest();
             }
-            order.OrderStatusId = 2;
+            order.OrderStatus = OrderStatus.NotActive;
             order.TotalPrice = model.TotalPrice;
             order.DateTimeClosed = DateTime.UtcNow;
             order.Table.Status = TableStatus.Free;

@@ -37,8 +37,7 @@ namespace API.Controllers
                     table = o.Table.Name,
                     dateTimeOrdered = o.DateTimeOrdered.ToShortTimeString(),
                     dateTimeClosed = o.DateTimeClosed,
-                    orderStatusId = o.OrderStatusId,
-                    orderStatus = o.OrderStatus.Name,
+                    orderStatus = o.OrderStatus.ToString(),
                     totalPrice = o.TotalPrice,
                     comment = o.Comment,
                     meals = o.MealOrders.Select(mo => new

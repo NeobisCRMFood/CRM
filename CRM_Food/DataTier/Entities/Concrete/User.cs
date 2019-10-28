@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataTier.Entities.Abstract;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -34,9 +35,6 @@ namespace DataTier.Entities.Concrete
 
         public DateTime StartWorkDay { get; set; }
 
-        [Required(ErrorMessage = "Выберите роль")]
-        public int RoleId { get; set; }
-        [JsonIgnore]
         public Role Role { get; set; }
         
         public string Comment { get; set; }

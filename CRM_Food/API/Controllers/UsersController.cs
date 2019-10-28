@@ -37,8 +37,7 @@ namespace API.Controllers
                 login = u.Login,
                 password = u.Password,
                 startWorkDate = u.StartWorkDay,
-                roleId = u.RoleId,
-                roleName = u.Role.Name,
+                roleName = u.Role.ToString(),
                 comment = u.Comment
             });
             return users;
@@ -106,7 +105,11 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var us = _context.Users.FirstOrDefault(u => u.Login == user.Login);
+            if (us != null)
+            {
+                return BadRequest();
+            }
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 

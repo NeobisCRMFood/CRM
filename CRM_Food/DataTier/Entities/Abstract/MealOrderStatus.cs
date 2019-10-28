@@ -4,10 +4,9 @@ using System.Text;
 
 namespace DataTier.Entities.Abstract
 {
-    public enum TableStatus
+    public enum MealOrderStatus
     {
-        Free = 0,
-        Busy = 1,
-        Booked = 2
+        NotReady = 0,
+        Ready = 1
     }
 }
