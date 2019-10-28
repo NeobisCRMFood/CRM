@@ -18,16 +18,14 @@ namespace DataTier.Entities.Abstract
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FoodCRM;Trusted_Connection=True;");
-
-            //optionsBuilder.UseNpgsql
-            //    (
-            //    "Host=satao.db.elephantsql.com;" +
-            //    "Port=5432;" +
-            //    "Database=bomosrkc;" +
-            //    "Username=bomosrkc;" +
-            //    "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
-            //    );
+            optionsBuilder.UseNpgsql
+                (
+                "Host=satao.db.elephantsql.com;" +
+                "Port=5432;" +
+                "Database=bomosrkc;" +
+                "Username=bomosrkc;" +
+                "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+                );
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
