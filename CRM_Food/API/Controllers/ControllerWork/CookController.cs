@@ -37,7 +37,7 @@ namespace API.Controllers.ControllerWork
                     orderId = o.Id,
                     dateTimeOrdered = o.DateTimeOrdered,
                     comment = o.Comment,
-                    mealsList = o.MealOrders.Where(mo => mo.Meal.Category.DepartmentId == 1).Select(mo => new
+                    mealsList = o.MealOrders.Select(mo => new
                     {
                         departmentName = mo.Meal.Category.Department.Name,
                         mealId = mo.MealId,
