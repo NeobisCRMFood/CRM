@@ -7,6 +7,7 @@ namespace DataTier.Entities.Abstract
     public enum OrderStatus
     {
         Active = 0,
-        NotActive = 1
+        NotActive = 1,
+        Cooked = 2
     }
 }

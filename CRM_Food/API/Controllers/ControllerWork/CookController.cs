@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,22 +30,44 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult ActiveOrders()
         {
-            var orders = _context.Orders.Where(o => o.OrderStatus == OrderStatus.Active).Select(o => new
-            {
-                id = o.Id,
-                dateTimeOrdered = o.DateTimeOrdered,
-                comment = o.Comment,
-                mealsList = o.MealOrders.Select(mo => new
+            var orders = _context.Orders
+                .Where(o => o.OrderStatus == OrderStatus.Active)
+                .Select(o => new
                 {
-                    mealId = mo.MealId,
-                    mealName = mo.Meal.Name,
-                    quantity = mo.Quantity,
-                    statusId = mo.MealOrderStatus,
-                    status = mo.MealOrderStatus.ToString()
-                }),
-                OrderStatus = o.OrderStatus.ToString(),
-            }).OrderBy(o => o.dateTimeOrdered);
+                    orderId = o.Id,
+                    dateTimeOrdered = o.DateTimeOrdered,
+                    comment = o.Comment,
+                    mealsList = o.MealOrders.Where(mo => mo.Meal.Category.DepartmentId == 1).Select(mo => new
+                    {
+                        departmentName = mo.Meal.Category.Department.Name,
+                        mealId = mo.MealId,
+                        mealName = mo.Meal.Name,
+                        quantity = mo.Quantity,
+                        statusId = mo.MealOrderStatus,
+                        status = mo.MealOrderStatus.ToString()
+                    }),
+                    orderStatus = o.OrderStatus.ToString()
+                }).OrderBy(o => o.dateTimeOrdered);
             return Ok(orders);
+        }
+
+
+        [HttpGet("GetOrder/{id}")]
+        public async Task<IActionResult> GetOrder([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var order = await _context.Orders.FindAsync(id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(order);
         }
 
         [Route("closeMeal")]
@@ -76,9 +99,27 @@ namespace API.Controllers.ControllerWork
                     //}
                     transaction.Commit();
                 }
-
+                return Ok();
             }
-            return NoContent();
+            return NotFound();
+        }
+
+        [HttpPut("closeOrder/{id}")]
+        public async Task<IActionResult> CloseOrder([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
+            if (order != null)
+            {
+                order.OrderStatus = OrderStatus.Cooked;
+                _context.Entry(order).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("GetOrder", new { id = order.Id}, order);
+            }
+            return NotFound();
         }
     }
 }

@@ -243,6 +243,9 @@ namespace API.Controllers.ControllerWork
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == mealOrder.MealId);
             if (order != null && meal != null)
             {
+                order.DateTimeOrdered = DateTime.UtcNow;
+                order.OrderStatus = OrderStatus.Active;
+                _context.Entry(order).State = EntityState.Modified;
                 _context.MealOrders.Add(mealOrder);
                 await _context.SaveChangesAsync();
             }
