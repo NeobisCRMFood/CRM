@@ -192,7 +192,7 @@ namespace API.Controllers.ControllerWork
             return Ok(statisctics);
         }
 
-        [Route("getWaiterStatisticsWeek/{id}")]
+        [Route("getWaiterStatisticsMonth/{id}")]
         [HttpGet]
         public async Task<IActionResult> getWaiterStatisticsMonth([FromRoute] int id)
         {
