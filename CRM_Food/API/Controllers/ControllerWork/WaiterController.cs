@@ -113,7 +113,10 @@ namespace API.Controllers.ControllerWork
             var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
             {
                 orderCount = u.Orders.Count(),
-                totalSum = u.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Select(o => o.TotalPrice).Sum()
+
+                totalSum = u.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Select(o => o.TotalPrice)
+                .Sum()
             });
             return Ok(statisctics);
         }
@@ -188,6 +191,7 @@ namespace API.Controllers.ControllerWork
 
                 totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= model.EndDate)
                 .Select(o => o.TotalPrice)
                 .Sum()
             });

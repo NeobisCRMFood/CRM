@@ -33,12 +33,15 @@ namespace DataTier.Entities.Concrete
         [Required(ErrorMessage = "Заполните пароль")]
         public string Password { get; set; }
 
+        [DataType(DataType.EmailAddress)]
+        public string Email { get; set; }
         public DateTime StartWorkDay { get; set; }
 
         public Role Role { get; set; }
         
         public string Comment { get; set; }
-
+        public string ImageURL { get; set; }
+        
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
         public User()

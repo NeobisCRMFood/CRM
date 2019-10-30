@@ -53,7 +53,7 @@ namespace API.Controllers.ControllerWork
 
 
         [HttpGet("GetOrder/{id}")]
-        public async Task<IActionResult> GetOrder([FromRoute] int id)
+        private async Task<IActionResult> GetOrder([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -101,7 +101,7 @@ namespace API.Controllers.ControllerWork
                 }
                 return Ok();
             }
-            return NotFound();
+            return CreatedAtAction("GetOrder", new { id = order.Id}, order);
         }
 
         [HttpPut("closeOrder/{id}")]

@@ -110,6 +110,144 @@ namespace API.Controllers.ControllerWork
             return Ok(waiters);
         }
 
+        [Route("getWaiterStatistics/{id}")]
+        [HttpGet]
+        public async Task<IActionResult> getWaiterStatistics([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (waiter.Role != Role.waiter)
+            {
+                return NotFound();
+            }
+            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            {
+                orderCount = u.Orders
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("getWaiterStatisticsToday/{id}")]
+        [HttpGet]
+        public async Task<IActionResult> getWaiterStatisticsToday([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (waiter.Role != Role.waiter)
+            {
+                return NotFound();
+            }
+            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.Today)
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.Today)
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("getWaiterStatisticsWeek/{id}")]
+        [HttpGet]
+        public async Task<IActionResult> getWaiterStatisticsWeek([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (waiter.Role != Role.waiter)
+            {
+                return NotFound();
+            }
+            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("getWaiterStatisticsWeek/{id}")]
+        [HttpGet]
+        public async Task<IActionResult> getWaiterStatisticsMonth([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (waiter.Role != Role.waiter)
+            {
+                return NotFound();
+            }
+            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
+        }
+
+        [Route("getWaiterStatisticsRange/{id}")]
+        [HttpGet]
+        public async Task<IActionResult> getWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (waiter.Role != Role.waiter)
+            {
+                return NotFound();
+            }
+            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            {
+                orderCount = u.Orders
+                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= o.DateTimeClosed)
+                .Count(),
+
+                totalSum = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= model.EndDate)
+                .Select(o => o.TotalPrice)
+                .Sum()
+            });
+            return Ok(statisctics);
+        }
+
         [Route("TotalSum")]
         [HttpGet]
         public async Task<IActionResult> TotalSum()
