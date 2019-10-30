@@ -37,8 +37,7 @@ namespace API.Controllers
                     table = o.Table.Name,
                     dateTimeOrdered = o.DateTimeOrdered.ToShortTimeString(),
                     dateTimeClosed = o.DateTimeClosed,
-                    orderStatusId = o.OrderStatusId,
-                    orderStatus = o.OrderStatus.Name,
+                    orderStatus = o.OrderStatus.ToString(),
                     totalPrice = o.TotalPrice,
                     comment = o.Comment,
                     meals = o.MealOrders.Select(mo => new
@@ -50,7 +49,6 @@ namespace API.Controllers
                 });
             return orders;
         }
-
         // GET: api/Orders/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder([FromRoute] int id)
@@ -105,21 +103,7 @@ namespace API.Controllers
             return NoContent();
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> PostOrder([FromBody] Order order)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    };
-        //    _context.Orders.Add(order);
-        //    await _context.SaveChangesAsync();
-        //    return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-        //}
-
-        //Осуществление заказа авторизированного пользователя
-        // POST: api/Orders
-        [Authorize(Roles = "waiter")]
+        [Route("createOrder")]
         [HttpPost]
         public async Task<IActionResult> PostOrder([FromBody] Order order)
         {
@@ -127,8 +111,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             };
-            var userId = User.Claims.First(i => i.Type == "UserId").Value;
-            order.UserId = int.Parse(userId);
+            order.Table.Status = TableStatus.Busy;
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);

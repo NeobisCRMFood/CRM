@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace DataTier.Entities.Concrete
@@ -10,8 +11,13 @@ namespace DataTier.Entities.Concrete
         [JsonIgnore]
         public int Id { get; set; }
         public int CategoryId { get; set; }
+        [JsonIgnore]
+        public Category Category { get; set; }
+        [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
+        [Required(ErrorMessage = "Заполните описание")]
         public string Description { get; set; }
+        [Required(ErrorMessage = "Заполните цену")]
         public decimal Price { get; set; }
         public int? Weight { get; set; }
         public string ImageURL { get; set; }

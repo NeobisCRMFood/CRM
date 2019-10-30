@@ -23,9 +23,24 @@ namespace API.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public IEnumerable<User> GetUsers()
+        public IQueryable GetUsers()
         {
-            return _context.Users;
+            var users = _context.Users.Select(u => new
+            {
+                id = u.Id,
+                firstName = u.FirstName,
+                lastName = u.LastName,
+                middleName = u.MiddleName,
+                gender = u.Gender,
+                dateBorn = u.DateBorn,
+                phoneNumber = u.PhoneNumber,
+                login = u.Login,
+                password = u.Password,
+                startWorkDate = u.StartWorkDay,
+                roleName = u.Role.ToString(),
+                comment = u.Comment
+            });
+            return users;
         }
 
         // GET: api/Users/5
@@ -90,7 +105,11 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var us = _context.Users.FirstOrDefault(u => u.Login == user.Login);
+            if (us != null)
+            {
+                return BadRequest();
+            }
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 

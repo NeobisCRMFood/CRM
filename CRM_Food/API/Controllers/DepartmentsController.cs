@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/Departments
         [HttpGet]
-        public IEnumerable<Department> GetDepartments()
+        public IQueryable GetDepartments()
         {
-            return _context.Departments;
+            var departments = _context.Departments.Select(d => new
+            {
+                id = d.Id,
+                name = d.Name
+            });
+            return departments;
         }
 
         // GET: api/Departments/5

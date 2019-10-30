@@ -54,7 +54,7 @@ namespace API
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddJsonOptions(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
-                options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
+                options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
             });
 
             services.AddDbContext<EFDbContext>();

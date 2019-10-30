@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using DataTier.Entities.Abstract;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace DataTier.Entities.Concrete
@@ -19,22 +21,14 @@ namespace DataTier.Entities.Concrete
         [JsonIgnore]
         public DateTime DateTimeOrdered
         {
-            get { return dateTimeOrdered ?? DateTime.Now; }
+            get { return dateTimeOrdered ?? DateTime.UtcNow; }
             set { dateTimeOrdered = value; }
         }
         [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
-
-        private int? orderStatusId;
-        [JsonIgnore]
-        public int OrderStatusId
-        {
-            get { return orderStatusId ?? 1; }
-            set { orderStatusId = value; }
-        }
         [JsonIgnore]
         public OrderStatus OrderStatus { get; set; }
-        public decimal? TotalPrice { get; set; }
+        public decimal TotalPrice { get; set; }
         public string Comment { get; set; }
         public ICollection<MealOrder> MealOrders { get; set; }
         public Order()

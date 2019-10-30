@@ -23,9 +23,14 @@ namespace API.Controllers
 
         // GET: api/Tables
         [HttpGet]
-        public IEnumerable<Table> GetTables()
+        public IQueryable GetTables()
         {
-            return _context.Tables;
+            var tables = _context.Tables.Select(t => new
+            {
+                id = t.Id,
+                name = t.Name
+            });
+            return tables;
         }
 
         // GET: api/Tables/5

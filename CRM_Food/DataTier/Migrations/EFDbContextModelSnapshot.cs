@@ -26,7 +26,8 @@ namespace DataTier.Migrations
 
                     b.Property<int>("DepartmentId");
 
-                    b.Property<string>("Name");
+                    b.Property<string>("Name")
+                        .IsRequired();
 
                     b.HasKey("Id");
 
@@ -40,7 +41,8 @@ namespace DataTier.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Name");
+                    b.Property<string>("Name")
+                        .IsRequired();
 
                     b.HasKey("Id");
 
@@ -54,11 +56,13 @@ namespace DataTier.Migrations
 
                     b.Property<int>("CategoryId");
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Description")
+                        .IsRequired();
 
                     b.Property<string>("ImageURL");
 
-                    b.Property<string>("Name");
+                    b.Property<string>("Name")
+                        .IsRequired();
 
                     b.Property<decimal>("Price");
 
@@ -77,29 +81,15 @@ namespace DataTier.Migrations
 
                     b.Property<int>("OrderId");
 
-                    b.Property<int>("MealOrderStatusId");
+                    b.Property<int>("MealOrderStatus");
 
                     b.Property<int>("Quantity");
 
                     b.HasKey("MealId", "OrderId");
 
-                    b.HasIndex("MealOrderStatusId");
-
                     b.HasIndex("OrderId");
 
                     b.ToTable("MealOrders");
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.MealOrderStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MealOrderStatuses");
                 });
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Order", b =>
@@ -113,17 +103,15 @@ namespace DataTier.Migrations
 
                     b.Property<DateTime>("DateTimeOrdered");
 
-                    b.Property<int>("OrderStatusId");
+                    b.Property<int>("OrderStatus");
 
                     b.Property<int>("TableId");
 
-                    b.Property<decimal?>("TotalPrice");
+                    b.Property<decimal>("TotalPrice");
 
                     b.Property<int>("UserId");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrderStatusId");
 
                     b.HasIndex("TableId");
 
@@ -132,36 +120,17 @@ namespace DataTier.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("DataTier.Entities.Concrete.OrderStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OrderStatuses");
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-                });
-
             modelBuilder.Entity("DataTier.Entities.Concrete.Table", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Name");
+                    b.Property<DateTime?>("BookDate");
+
+                    b.Property<string>("Name")
+                        .IsRequired();
+
+                    b.Property<int>("Status");
 
                     b.HasKey("Id");
 
@@ -177,27 +146,34 @@ namespace DataTier.Migrations
 
                     b.Property<DateTime>("DateBorn");
 
-                    b.Property<string>("FirstName");
+                    b.Property<string>("Email");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired();
 
                     b.Property<string>("Gender");
 
-                    b.Property<string>("LastName");
+                    b.Property<string>("ImageURL");
 
-                    b.Property<string>("Login");
+                    b.Property<string>("LastName")
+                        .IsRequired();
+
+                    b.Property<string>("Login")
+                        .IsRequired();
 
                     b.Property<string>("MiddleName");
 
-                    b.Property<string>("Password");
+                    b.Property<string>("Password")
+                        .IsRequired();
 
-                    b.Property<string>("PhoneNumber");
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired();
 
-                    b.Property<int>("RoleId");
+                    b.Property<int>("Role");
 
                     b.Property<DateTime>("StartWorkDay");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -212,7 +188,7 @@ namespace DataTier.Migrations
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Meal", b =>
                 {
-                    b.HasOne("DataTier.Entities.Concrete.Category")
+                    b.HasOne("DataTier.Entities.Concrete.Category", "Category")
                         .WithMany("Meals")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -225,11 +201,6 @@ namespace DataTier.Migrations
                         .HasForeignKey("MealId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("DataTier.Entities.Concrete.MealOrderStatus", "MealOrderStatus")
-                        .WithMany("MealOrders")
-                        .HasForeignKey("MealOrderStatusId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("DataTier.Entities.Concrete.Order", "Order")
                         .WithMany("MealOrders")
                         .HasForeignKey("OrderId")
@@ -238,11 +209,6 @@ namespace DataTier.Migrations
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Order", b =>
                 {
-                    b.HasOne("DataTier.Entities.Concrete.OrderStatus", "OrderStatus")
-                        .WithMany()
-                        .HasForeignKey("OrderStatusId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("DataTier.Entities.Concrete.Table", "Table")
                         .WithMany("Orders")
                         .HasForeignKey("TableId")
@@ -251,14 +217,6 @@ namespace DataTier.Migrations
                     b.HasOne("DataTier.Entities.Concrete.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.User", b =>
-                {
-                    b.HasOne("DataTier.Entities.Concrete.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
