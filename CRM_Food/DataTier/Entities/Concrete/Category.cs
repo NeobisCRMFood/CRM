@@ -16,6 +16,7 @@ namespace DataTier.Entities.Concrete
         public Department Department { get; set; }
         [JsonIgnore]
         public ICollection<Meal> Meals { get; set; }
+        public string ImageURL { get; set; }
         public Category()
         {
             Meals = new List<Meal>();

@@ -30,7 +30,8 @@ namespace API.Controllers
                 Id = c.Id,
                 DepartmentId = c.DepartmentId,
                 DepartmentName = c.Department.Name,
-                Category = c.Name
+                Category = c.Name,
+                image = c.ImageURL
             });
             return categories;
         }
