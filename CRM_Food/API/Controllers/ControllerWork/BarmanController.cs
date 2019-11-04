@@ -1,26 +1,25 @@
-﻿using API.Hubs;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
-using DataTier.Entities.Concrete;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "cook")]
     [Route("api/[controller]")]
     [ApiController]
-    public class CookController : ControllerBase
+    public class BarmanController : ControllerBase
     {
         private readonly EFDbContext _context;
         private readonly IHubContext<OrderHub> _hubContext;
-        public CookController(EFDbContext context, IHubContext<OrderHub> hubContext)
+
+        public BarmanController(EFDbContext context, IHubContext<OrderHub> hubContext)
         {
             _context = context;
             _hubContext = hubContext;
@@ -31,7 +30,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult ActiveOrders()
         {
             var orders = _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.Active && o.OrderStatus == OrderStatus.BarCooked)
+                .Where(o => o.OrderStatus == OrderStatus.Active && o.OrderStatus == OrderStatus.MealCooked)
                 .Select(o => new
                 {
                     orderId = o.Id,
@@ -49,59 +48,6 @@ namespace API.Controllers.ControllerWork
                     orderStatus = o.OrderStatus.ToString()
                 }).OrderBy(o => o.dateTimeOrdered);
             return Ok(orders);
-        }
-
-        [Route("getMeals")]
-        [HttpGet]
-        public IActionResult GetMeals()
-        {
-            var meals = _context.Meals;
-            return Ok(meals);
-        }
-
-        [Route("changeMealStatus/{id}")]
-        [HttpPut]
-        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
-            if (meal != null)
-            {
-                if (meal.MealStatus == MealStatus.Have)
-                {
-                    meal.MealStatus = MealStatus.HaveNot;
-                    await _context.SaveChangesAsync();
-                    return Ok(meal);
-                }
-                else if (meal.MealStatus == MealStatus.HaveNot)
-                {
-                    meal.MealStatus = MealStatus.Have;
-                    await _context.SaveChangesAsync();
-                    return Ok(meal);
-                }
-            }
-            return NotFound();
-        }
-
-        [HttpGet("GetOrder/{id}")]
-        private async Task<IActionResult> GetOrder([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var order = await _context.Orders.FindAsync(id);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(order);
         }
 
         [Route("closeMeal")]
@@ -148,10 +94,10 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
             if (order != null)
             {
-                order.OrderStatus = OrderStatus.MealCooked;
+                order.OrderStatus = OrderStatus.BarCooked;
                 _context.Entry(order).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                return CreatedAtAction("GetOrder", new { id = order.Id}, order);
+                return CreatedAtAction("GetOrder", new { id = order.Id }, order);
             }
             return NotFound();
         }

@@ -97,6 +97,41 @@ namespace API.Controllers.ControllerWork
             return NoContent();
         }
 
+        [Route("getMeals")]
+        [HttpGet]
+        public IActionResult GetMeals()
+        {
+            var meals = _context.Meals;
+            return Ok(meals);
+        }
+
+        [Route("changeMealStatus/{id}")]
+        [HttpPut]
+        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
+            if (meal != null)
+            {
+                if (meal.MealStatus == MealStatus.Have)
+                {
+                    meal.MealStatus = MealStatus.HaveNot;
+                    await _context.SaveChangesAsync();
+                    return Ok(meal);
+                }
+                else if (meal.MealStatus == MealStatus.HaveNot)
+                {
+                    meal.MealStatus = MealStatus.Have;
+                    await _context.SaveChangesAsync();
+                    return Ok(meal);
+                }
+            }
+            return NotFound();
+        }
+
         [Route("getWaiters")]
         [HttpGet]
         public IActionResult GetWaiters()
@@ -112,7 +147,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("getWaiterStatistics/{id}")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatistics([FromRoute] int id)
+        public async Task<IActionResult> GetWaiterStatistics([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -138,7 +173,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("getWaiterStatisticsToday/{id}")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsToday([FromRoute] int id)
+        public async Task<IActionResult> GetWaiterStatisticsToday([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -166,7 +201,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("getWaiterStatisticsWeek/{id}")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsWeek([FromRoute] int id)
+        public async Task<IActionResult> GetWaiterStatisticsWeek([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -194,7 +229,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("getWaiterStatisticsMonth/{id}")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsMonth([FromRoute] int id)
+        public async Task<IActionResult> GetWaiterStatisticsMonth([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -222,7 +257,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("getWaiterStatisticsRange/{id}")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
+        public async Task<IActionResult> GetWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
         {
             if (!ModelState.IsValid)
             {

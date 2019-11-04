@@ -99,6 +99,7 @@ namespace API.Controllers.ControllerWork
                             mealId = m.Id,
                             mealName = m.Name,
                             mealWeight = m.Weight,
+                            mealStatus = m.MealStatus,
                             price = m.Price
                         })
                     })
@@ -219,8 +220,7 @@ namespace API.Controllers.ControllerWork
                     var ord = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == order.Id);
                     ord.Table.Status = TableStatus.Busy;
                     await _context.SaveChangesAsync();
-                    //var userId = User.Claims.First(i => i.Type == "UserId").Value;
-                    //if (int.Parse(userId) == ord.UserId)
+                    //if (int.Parse(userId) == order.UserId)
                     //{
                     //    await _hubContext.Clients.User(userId).SendAsync($"Notify", "Поступил заказ");
                     //}
@@ -264,7 +264,7 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(ModelState);
             }
-            Order order = await _context.Orders
+            var order = await _context.Orders
                 .Include(o => o.Table)
                 .FirstOrDefaultAsync(o => o.Id == model.OrderId);
             if (order == null)

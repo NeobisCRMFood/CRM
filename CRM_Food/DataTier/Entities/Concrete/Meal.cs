@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataTier.Entities.Abstract;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,7 @@ namespace DataTier.Entities.Concrete
         [Required(ErrorMessage = "Заполните цену")]
         public decimal Price { get; set; }
         public int? Weight { get; set; }
+        public MealStatus MealStatus { get; set; }
         public string ImageURL { get; set; }
 
         [JsonIgnore]
