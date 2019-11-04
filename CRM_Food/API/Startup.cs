@@ -84,7 +84,7 @@ namespace API
             app.UseHttpsRedirection();
             app.UseSignalR(routes => 
             {
-                routes.MapHub<OrderHub>("/order");
+                routes.MapHub<FoodHub>("/order");
             });
             app.UseAuthentication();
             app.UseMvc();

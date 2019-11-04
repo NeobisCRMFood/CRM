@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace API.Hubs
 {
-    public class OrderHub : Hub
+    public class FoodHub : Hub
     {
 
     }

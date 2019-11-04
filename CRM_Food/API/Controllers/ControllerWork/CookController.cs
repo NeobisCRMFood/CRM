@@ -19,8 +19,8 @@ namespace API.Controllers.ControllerWork
     public class CookController : ControllerBase
     {
         private readonly EFDbContext _context;
-        private readonly IHubContext<OrderHub> _hubContext;
-        public CookController(EFDbContext context, IHubContext<OrderHub> hubContext)
+        private readonly IHubContext<FoodHub> _hubContext;
+        public CookController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
             _hubContext = hubContext;
@@ -31,7 +31,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult ActiveOrders()
         {
             var orders = _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.Active && o.OrderStatus == OrderStatus.BarCooked)
+                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.BarCooked)
                 .Select(o => new
                 {
                     orderId = o.Id,
@@ -74,12 +74,26 @@ namespace API.Controllers.ControllerWork
                 {
                     meal.MealStatus = MealStatus.HaveNot;
                     await _context.SaveChangesAsync();
+
+                    //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
+                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                    //if (user.Role == Role.admin || user.Role == Role.cook)
+                    //{
+                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                    //}
                     return Ok(meal);
                 }
                 else if (meal.MealStatus == MealStatus.HaveNot)
                 {
                     meal.MealStatus = MealStatus.Have;
                     await _context.SaveChangesAsync();
+
+                    //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
+                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                    //if (user.Role == Role.admin || user.Role == Role.cook)
+                    //{
+                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                    //}
                     return Ok(meal);
                 }
             }

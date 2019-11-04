@@ -18,8 +18,8 @@ namespace API.Controllers.ControllerWork
     public class WaiterController : ControllerBase
     {
         private readonly EFDbContext _context;
-        private readonly IHubContext<OrderHub> _hubContext;
-        public WaiterController(EFDbContext context, IHubContext<OrderHub> hubContext)
+        private readonly IHubContext<FoodHub> _hubContext;
+        public WaiterController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
             _hubContext = hubContext;

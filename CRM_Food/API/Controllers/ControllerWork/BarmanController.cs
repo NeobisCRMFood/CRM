@@ -17,9 +17,9 @@ namespace API.Controllers.ControllerWork
     public class BarmanController : ControllerBase
     {
         private readonly EFDbContext _context;
-        private readonly IHubContext<OrderHub> _hubContext;
+        private readonly IHubContext<FoodHub> _hubContext;
 
-        public BarmanController(EFDbContext context, IHubContext<OrderHub> hubContext)
+        public BarmanController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
             _hubContext = hubContext;
@@ -30,7 +30,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult ActiveOrders()
         {
             var orders = _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.Active && o.OrderStatus == OrderStatus.MealCooked)
+                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.MealCooked)
                 .Select(o => new
                 {
                     orderId = o.Id,
@@ -50,9 +50,9 @@ namespace API.Controllers.ControllerWork
             return Ok(orders);
         }
 
-        [Route("closeMeal")]
+        [Route("closeDrink")]
         [HttpPost]
-        public async Task<IActionResult> CloseMeal([FromBody]MealReadyModel model)
+        public async Task<IActionResult> CloseDrink([FromBody]MealReadyModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -80,6 +80,47 @@ namespace API.Controllers.ControllerWork
                     transaction.Commit();
                 }
                 return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+            }
+            return NotFound();
+        }
+
+        [Route("getMeals")]
+        [HttpGet]
+        public IActionResult GetMeals()
+        {
+            var meals = _context.Meals;
+            return Ok(meals);
+        }
+
+        [Route("changeMealStatus/{id}")]
+        [HttpPut]
+        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
+            if (meal != null)
+            {
+                if (meal.MealStatus == MealStatus.Have)
+                {
+                    meal.MealStatus = MealStatus.HaveNot;
+                    await _context.SaveChangesAsync();
+                    //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
+                    //var userId = GetUserId();
+                    //await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+                    return Ok(meal);
+                }
+                else if (meal.MealStatus == MealStatus.HaveNot)
+                {
+                    meal.MealStatus = MealStatus.Have;
+                    await _context.SaveChangesAsync();
+                    //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
+                    //var userId = GetUserId();
+                    //await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+                    return Ok(meal);
+                }
             }
             return NotFound();
         }

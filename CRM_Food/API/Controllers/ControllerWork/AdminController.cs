@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ControllerWork
@@ -17,10 +19,12 @@ namespace API.Controllers.ControllerWork
     public class AdminController : ControllerBase
     {
         private readonly EFDbContext _context;
-        public AdminController(EFDbContext context)
+        private readonly IHubContext<FoodHub> _hubContext;
+        public AdminController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
-        }
+            _hubContext = hubContext;
+    }
         [Route("BookTable")]
         [HttpPost]
         public async Task<IActionResult> BookTable([FromBody] BookModel model)
@@ -101,7 +105,16 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult GetMeals()
         {
-            var meals = _context.Meals;
+            var meals = _context.Meals.Select(m => new
+            {
+                id = m.Id,
+                name = m.Name,
+                description = m.Description,
+                price = m.Price,
+                weight = m.Weight,
+                status = m.MealStatus.ToString(),
+                image = m.ImageURL
+            });
             return Ok(meals);
         }
 
@@ -120,12 +133,26 @@ namespace API.Controllers.ControllerWork
                 {
                     meal.MealStatus = MealStatus.HaveNot;
                     await _context.SaveChangesAsync();
+
+                    //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
+                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                    //if (user.Role == Role.admin || user.Role == Role.cook)
+                    //{
+                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                    //}
                     return Ok(meal);
                 }
                 else if (meal.MealStatus == MealStatus.HaveNot)
                 {
                     meal.MealStatus = MealStatus.Have;
                     await _context.SaveChangesAsync();
+
+                    //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
+                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                    //if (user.Role == Role.admin || user.Role == Role.cook)
+                    //{
+                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                    //}
                     return Ok(meal);
                 }
             }
@@ -145,6 +172,7 @@ namespace API.Controllers.ControllerWork
             return Ok(waiters);
         }
 
+        #region Статистика
         [Route("getWaiterStatistics/{id}")]
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatistics([FromRoute] int id)
@@ -463,6 +491,12 @@ namespace API.Controllers.ControllerWork
             }).OrderByDescending(u => u.orderCount);
 
             return Ok(top);
+        }
+        #endregion
+        private string GetUserId()
+        {
+            var userId = User.Claims.First(i => i.Type == "UserId").Value;
+            return userId;
         }
     }
 }
