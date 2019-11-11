@@ -23,7 +23,7 @@ namespace API.Controllers
 
         // GET: api/Meals
         [HttpGet]
-        public IQueryable GetMeals()
+        public IActionResult GetMeals()
         {
             var meals = _context.Meals.Select(m => new
             {
@@ -36,23 +36,18 @@ namespace API.Controllers
                 weight = m.Weight,
                 imageURL = m.ImageURL
             });
-            return meals;
+            return Ok(meals);
         }
 
         // GET: api/Meals/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMeal([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var meal = await _context.Meals.FindAsync(id);
 
             if (meal == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Meal was not found"});
             }
 
             return Ok(meal);
@@ -69,7 +64,7 @@ namespace API.Controllers
 
             if (id != meal.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Meal id is not equal to id from route" });
             }
 
             _context.Entry(meal).State = EntityState.Modified;
@@ -82,7 +77,7 @@ namespace API.Controllers
             {
                 if (!MealExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Meal was not found" });
                 }
                 else
                 {
@@ -90,7 +85,7 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Meals
@@ -101,7 +96,11 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight);
+            if (mealExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Meal exists" });
+            }
             _context.Meals.Add(meal);
             await _context.SaveChangesAsync();
 
@@ -112,15 +111,10 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMeal([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var meal = await _context.Meals.FindAsync(id);
             if (meal == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Meal was not found"});
             }
 
             _context.Meals.Remove(meal);

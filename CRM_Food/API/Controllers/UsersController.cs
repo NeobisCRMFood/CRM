@@ -23,7 +23,7 @@ namespace API.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public IQueryable GetUsers()
+        public IActionResult GetUsers()
         {
             var users = _context.Users.Select(u => new
             {
@@ -36,27 +36,23 @@ namespace API.Controllers
                 phoneNumber = u.PhoneNumber,
                 login = u.Login,
                 password = u.Password,
+                email = u.Email,
                 startWorkDate = u.StartWorkDay,
                 roleName = u.Role.ToString(),
                 comment = u.Comment
             });
-            return users;
+            return Ok(users);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var user = await _context.Users.FindAsync(id);
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "User was not found" });
             }
 
             return Ok(user);
@@ -73,7 +69,7 @@ namespace API.Controllers
 
             if (id != user.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "User id is not equal to id from route" });
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -86,7 +82,7 @@ namespace API.Controllers
             {
                 if (!UserExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "User was not found" });
                 }
                 else
                 {
@@ -94,7 +90,7 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Users
@@ -105,10 +101,10 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var us = _context.Users.FirstOrDefault(u => u.Login == user.Login);
-            if (us != null)
+            var userExist = _context.Users.FirstOrDefault(u => u.Login == user.Login);
+            if (userExist != null)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "User exists" });
             }
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -128,7 +124,7 @@ namespace API.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "User was not found" });
             }
 
             _context.Users.Remove(user);

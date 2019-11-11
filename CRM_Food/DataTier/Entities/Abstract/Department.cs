@@ -4,11 +4,9 @@ using System.Text;
 
 namespace DataTier.Entities.Abstract
 {
-    public enum Role
+    public enum Department
     {
-        admin = 1,
-        cook = 2,
-        waiter = 3,
-        barman = 4
+        Kitchen = 0,
+        Bar = 1
     }
 }

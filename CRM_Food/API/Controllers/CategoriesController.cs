@@ -27,10 +27,10 @@ namespace API.Controllers
         {
             var categories = _context.Categories.Select(c => new
             {
-                Id = c.Id,
-                DepartmentId = c.DepartmentId,
-                DepartmentName = c.Department.Name,
-                Category = c.Name,
+                id = c.Id,
+                departmentId = c.Department,
+                departmentName = c.Department.ToString(),
+                category = c.Name,
                 image = c.ImageURL
             });
             return categories;
@@ -40,16 +40,11 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategory([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var category = await _context.Categories.FindAsync(id);
 
             if (category == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Category was not found"});
             }
 
             return Ok(category);
@@ -66,7 +61,7 @@ namespace API.Controllers
 
             if (id != category.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Category id is not equal to id from route" });
             }
 
             _context.Entry(category).State = EntityState.Modified;
@@ -79,7 +74,7 @@ namespace API.Controllers
             {
                 if (!CategoryExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Category was not found" });
                 }
                 else
                 {
@@ -87,7 +82,7 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Categories
@@ -98,7 +93,11 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name);
+            if (categoryExist != null)
+            {
+                return BadRequest(new { status = "error", message = "Category exists"});
+            }
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
@@ -109,15 +108,10 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Category was not found"});
             }
 
             _context.Categories.Remove(category);

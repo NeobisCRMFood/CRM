@@ -12,7 +12,7 @@ namespace API
         public const string ISSUER = "CRMServer";
         public const string AUDIENCE = "CRMFood";
         const string KEY = "mysupersecret_secretkey!123";
-        public const int LIFETIME = 20;
+        public const int LIFETIME = 1440;
 
         public static SymmetricSecurityKey GetSymmetricSecurityKey()
         {

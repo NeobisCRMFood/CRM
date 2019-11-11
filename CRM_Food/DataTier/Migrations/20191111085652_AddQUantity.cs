@@ -2,21 +2,22 @@
 
 namespace DataTier.Migrations
 {
-    public partial class CategoryImage : Migration
+    public partial class AddQUantity : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "ImageURL",
-                table: "Categories",
-                nullable: true);
+            migrationBuilder.AddColumn<int>(
+                name: "Quantity",
+                table: "MealOrders",
+                nullable: false,
+                defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ImageURL",
-                table: "Categories");
+                name: "Quantity",
+                table: "MealOrders");
         }
     }
 }

@@ -10,7 +10,6 @@ namespace DataTier.Entities.Abstract
         private EFDbContext _context = new EFDbContext();
 
         public IEnumerable<User> Users { get { return _context.Users; } }
-        public IEnumerable<Department> Departments { get { return _context.Departments; } }
         public IEnumerable<Table> Tables { get { return _context.Tables; } }
         public IEnumerable<Category> Categories { get { return _context.Categories; } }
         public IEnumerable<Meal> Meals { get { return _context.Meals; } }

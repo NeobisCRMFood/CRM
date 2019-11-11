@@ -3,58 +3,47 @@ using System;
 using DataTier.Entities.Abstract;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace DataTier.Migrations
 {
     [DbContext(typeof(EFDbContext))]
-    [Migration("20191028115959_Init")]
+    [Migration("20191111080742_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
                 .HasAnnotation("ProductVersion", "2.1.11-servicing-32099")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Category", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("DepartmentId");
+                    b.Property<int>("Department");
+
+                    b.Property<string>("ImageURL");
 
                     b.Property<string>("Name")
                         .IsRequired();
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.Department", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name")
-                        .IsRequired();
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Meal", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<int>("CategoryId");
 
@@ -63,12 +52,14 @@ namespace DataTier.Migrations
 
                     b.Property<string>("ImageURL");
 
+                    b.Property<int>("MealStatus");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
                     b.Property<decimal>("Price");
 
-                    b.Property<int?>("Weight");
+                    b.Property<string>("Weight");
 
                     b.HasKey("Id");
 
@@ -97,7 +88,8 @@ namespace DataTier.Migrations
             modelBuilder.Entity("DataTier.Entities.Concrete.Order", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Comment");
 
@@ -125,7 +117,8 @@ namespace DataTier.Migrations
             modelBuilder.Entity("DataTier.Entities.Concrete.Table", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime?>("BookDate");
 
@@ -142,16 +135,21 @@ namespace DataTier.Migrations
             modelBuilder.Entity("DataTier.Entities.Concrete.User", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Comment");
 
                     b.Property<DateTime>("DateBorn");
 
+                    b.Property<string>("Email");
+
                     b.Property<string>("FirstName")
                         .IsRequired();
 
                     b.Property<string>("Gender");
+
+                    b.Property<string>("ImageURL");
 
                     b.Property<string>("LastName")
                         .IsRequired();
@@ -174,14 +172,6 @@ namespace DataTier.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.Category", b =>
-                {
-                    b.HasOne("DataTier.Entities.Concrete.Department", "Department")
-                        .WithMany("Categories")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Meal", b =>

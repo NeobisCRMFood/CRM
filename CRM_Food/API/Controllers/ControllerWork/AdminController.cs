@@ -24,37 +24,65 @@ namespace API.Controllers.ControllerWork
         {
             _context = context;
             _hubContext = hubContext;
-    }
+        }
+
+        [Route("getMenu")]
+        [HttpGet]
+        public IActionResult Get_menu()
+        {
+            var menu = _context.Categories
+                .Select(c => new
+                {
+                    category = c.Name,
+                    departmentId = c.Department,
+                    departmentName = c.Department.ToString(),
+                    meals = c.Meals.Select(m => new
+                    {
+                        mealId = m.Id,
+                        mealName = m.Name,
+                        mealWeight = m.Weight,
+                        mealStatus = m.MealStatus,
+                        price = m.Price
+                    })
+                });
+            return Ok(menu);
+        }
+
         [Route("BookTable")]
         [HttpPost]
         public async Task<IActionResult> BookTable([FromBody] BookModel model)
         {
-            if (!ModelState.IsValid)
+            //Проверка на модель, так как автоматически присваиваются данные для модели
+            if (model.BookDate <= DateTime.Parse("01.01.0001 0:00:00") && model.TableId <= 0)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Invalid Json model"});
             }
             var table = _context.Tables.FirstOrDefault(t => t.Id == model.TableId);
             if (table == null)
             {
-                return BadRequest();
+                return NotFound(new { status = "error", message = "Table was not found"});
             }
             if (table.Status != TableStatus.Busy && table.Status != TableStatus.Booked)
             {
                 table.Status = TableStatus.Booked;
                 table.BookDate = model.BookDate;
             }
+            else
+            {
+                return BadRequest(new { status = "error", message = "Table is busy or booked"});
+            }
             _context.Entry(table).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(new { status = "success", message = "Table is booked" });
         }
 
         [Route("TotalSumDateRange")]
         [HttpPost]
         public async Task<IActionResult> TotalSumDateRange([FromBody] DateRange model)
         {
-            if (!ModelState.IsValid)
+            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Date model is not valid"});
             }
             var totalPrices =  _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
@@ -68,9 +96,9 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> TotalOrdersDateRange([FromBody] DateRange model)
         {
-            if (!ModelState.IsValid)
+            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
             var totalPrices = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
@@ -82,23 +110,23 @@ namespace API.Controllers.ControllerWork
         [HttpPut("DeleteBook/{id}")]
         public async Task<IActionResult> DeleteBook([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var table = _context.Tables.FirstOrDefault(t => t.Id == id);
             if (table == null)
             {
-                return BadRequest();
+                return NotFound(new { status = "error", message = "Table was not found" });
             }
-            if (table.Status != TableStatus.Busy && table.Status != TableStatus.Booked)
+            if (table.Status == TableStatus.Booked)
             {
                 table.Status = TableStatus.Free;
                 table.BookDate = null;
             }
+            else
+            {
+                return BadRequest(new { status = "error", message = "Table is free or busy"});
+            }
             _context.Entry(table).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(new { status = "success", message = "Book is deleted" });
         }
 
         [Route("getMeals")]
@@ -110,6 +138,7 @@ namespace API.Controllers.ControllerWork
                 id = m.Id,
                 name = m.Name,
                 description = m.Description,
+                category = m.Category.Name,
                 price = m.Price,
                 weight = m.Weight,
                 status = m.MealStatus.ToString(),
@@ -122,10 +151,6 @@ namespace API.Controllers.ControllerWork
         [HttpPut]
         public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
             if (meal != null)
             {
@@ -156,7 +181,7 @@ namespace API.Controllers.ControllerWork
                     return Ok(meal);
                 }
             }
-            return NotFound();
+            return NotFound(new { status = "error", message = "Meal or drink was not Found"});
         }
 
         [Route("getWaiters")]
@@ -177,14 +202,10 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatistics([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (waiter.Role != Role.waiter)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "User is not waiter"});
             }
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
@@ -203,14 +224,16 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatisticsToday([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (waiter == null)
+            {
+                return NotFound(new { status = "error", message = "Waiter was not found" });
+            }
+
             if (waiter.Role != Role.waiter)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "User is not waiter" });
             }
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
@@ -231,14 +254,16 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatisticsWeek([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (waiter == null)
+            {
+                return NotFound(new { status = "error", message = "Waiter was not found"});
+            }
+
             if (waiter.Role != Role.waiter)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "User is not waiter" });
             }
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
@@ -259,15 +284,18 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatisticsMonth([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (waiter == null)
+            {
+                return NotFound(new { status = "error", message = "Waiter was not found" });
+            }
+
             if (waiter.Role != Role.waiter)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "User is not waiter" });
             }
+
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
                 orderCount = u.Orders
@@ -287,15 +315,23 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public async Task<IActionResult> GetWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
         {
-            if (!ModelState.IsValid)
+            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
+
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (waiter == null)
+            {
+                return NotFound(new { status = "error", message = "Waiter was not found" });
+            }
+
             if (waiter.Role != Role.waiter)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "User is not waiter" });
             }
+
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
                 orderCount = u.Orders
@@ -425,7 +461,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult SalesByMeal()
         {
             var meals = _context.Meals
-                .Where(m => m.Category.DepartmentId == 1)
+                .Where(m => m.Category.Department == Department.Kitchen)
                 .Include(m => m.MealOrders)
                 .Select(m => new
                 {
@@ -445,7 +481,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult SalesByDrink()
         {
             var meals = _context.Meals
-                .Where(m => m.Category.DepartmentId == 2)
+                .Where(m => m.Category.Department == Department.Bar)
                 .Include(m => m.MealOrders)
                 .Select(m => new
                 {

@@ -39,7 +39,7 @@ namespace API.Controllers.ControllerWork
                     comment = o.Comment,
                     mealsList = o.MealOrders.Select(mo => new
                     {
-                        departmentName = mo.Meal.Category.Department.Name,
+                        departmentName = mo.Meal.Category.Department.ToString(),
                         mealId = mo.MealId,
                         mealName = mo.Meal.Name,
                         quantity = mo.Quantity,
@@ -55,7 +55,18 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult GetMeals()
         {
-            var meals = _context.Meals;
+            var meals = _context.Meals.Select(m => new
+            {
+                id = m.Id,
+                name = m.Name,
+                description = m.Description,
+                department = m.Category.Department.ToString(),
+                category = m.Category.Name,
+                price = m.Price,
+                weight = m.Weight,
+                status = m.MealStatus.ToString(),
+                image = m.ImageURL
+            });
             return Ok(meals);
         }
 
@@ -97,7 +108,7 @@ namespace API.Controllers.ControllerWork
                     return Ok(meal);
                 }
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Drink was not Found" });
         }
 
         [HttpGet("GetOrder/{id}")]
@@ -122,10 +133,7 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> CloseMeal([FromBody]MealReadyModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+
 
             var order = await _context.Orders.Include(mo => mo.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
@@ -149,7 +157,7 @@ namespace API.Controllers.ControllerWork
                 }
                 return CreatedAtAction("GetOrder", new { id = order.Id }, order);
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Order or meal was not found" });
         }
 
         [HttpPut("closeOrder/{id}")]
@@ -167,7 +175,7 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
                 return CreatedAtAction("GetOrder", new { id = order.Id}, order);
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Order was not Found" });
         }
     }
 }

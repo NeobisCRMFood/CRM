@@ -23,14 +23,15 @@ namespace API.Controllers
 
         // GET: api/Tables
         [HttpGet]
-        public IQueryable GetTables()
+        public IActionResult GetTables()
         {
             var tables = _context.Tables.Select(t => new
             {
                 id = t.Id,
-                name = t.Name
+                name = t.Name,
+                status = t.Status.ToString()
             });
-            return tables;
+            return Ok(tables);
         }
 
         // GET: api/Tables/5
@@ -46,7 +47,7 @@ namespace API.Controllers
 
             if (table == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Table was not found"});
             }
 
             return Ok(table);
@@ -63,7 +64,7 @@ namespace API.Controllers
 
             if (id != table.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Table id is not equal to id from route" });
             }
 
             _context.Entry(table).State = EntityState.Modified;
@@ -76,7 +77,7 @@ namespace API.Controllers
             {
                 if (!TableExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Table was not found" });
                 }
                 else
                 {
@@ -84,7 +85,7 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Tables
@@ -95,7 +96,11 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name);
+            if (tableExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Table exists" });
+            }
             _context.Tables.Add(table);
             await _context.SaveChangesAsync();
 
@@ -114,7 +119,7 @@ namespace API.Controllers
             var table = await _context.Tables.FindAsync(id);
             if (table == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Table was not found" });
             }
 
             _context.Tables.Remove(table);

@@ -2,22 +2,20 @@
 
 namespace DataTier.Migrations
 {
-    public partial class MealStatus : Migration
+    public partial class MOid : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
-                name: "MealStatus",
-                table: "Meals",
+                name: "Id",
+                table: "MealOrders",
                 nullable: false,
                 defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "MealStatus",
-                table: "Meals");
+
         }
     }
 }

@@ -1,13 +1,14 @@
 ﻿using DataTier.Entities.Abstract;
+using DataTier.Entities.Concrete;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace DataTier.Entities.Concrete
+namespace API.Models
 {
-    public class Order
+    public class CreateOrderModel
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -16,13 +17,8 @@ namespace DataTier.Entities.Concrete
         public int TableId { get; set; }
         [JsonIgnore]
         public Table Table { get; set; }
-        private DateTime? dateTimeOrdered;
         [JsonIgnore]
-        public DateTime DateTimeOrdered
-        {
-            get { return dateTimeOrdered ?? DateTime.UtcNow; }
-            set { dateTimeOrdered = value; }
-        }
+        public DateTime DateTimeOrdered { get; set; }
         [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
         [JsonIgnore]
@@ -30,7 +26,8 @@ namespace DataTier.Entities.Concrete
         public decimal TotalPrice { get; set; }
         public string Comment { get; set; }
         public ICollection<MealOrder> MealOrders { get; set; }
-        public Order()
+        public CreateOrderModel()
+
         {
             MealOrders = new List<MealOrder>();
         }

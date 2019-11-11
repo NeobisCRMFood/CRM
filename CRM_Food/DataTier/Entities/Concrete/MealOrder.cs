@@ -9,10 +9,13 @@ namespace DataTier.Entities.Concrete
     public class MealOrder
     {
         public int OrderId { get; set; }
+        [JsonIgnore]
         public Order Order { get; set; }
         public int MealId { get; set; }
+        [JsonIgnore]
         public Meal Meal { get; set; }
         public int Quantity { get; set; }
+        [JsonIgnore]
         public MealOrderStatus MealOrderStatus { get; set; }
     }
 }

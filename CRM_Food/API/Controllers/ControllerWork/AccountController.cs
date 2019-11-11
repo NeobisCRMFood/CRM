@@ -34,8 +34,13 @@ namespace API.Controllers.ControllerWork
             var identity = GetIdentity(authUser.Login, authUser.Password);
             if (identity == null)
             {
-                Response.StatusCode = 400;
-                await Response.WriteAsync("Invalid username or password");
+                var error = new
+                {
+                    status = 400,
+                    message = "Invalid username or password"
+                };
+                Response.ContentType = "application/json";
+                await Response.WriteAsync(JsonConvert.SerializeObject(error, new JsonSerializerSettings { Formatting = Formatting.Indented }));
                 return;
             }
 

@@ -8,7 +8,6 @@ namespace DataTier.Entities.Abstract
     public interface IEFDbContextRepository
     {
         IEnumerable<User> Users { get;}
-        IEnumerable<Department> Departments  {get;}
         IEnumerable<Table> Tables {get;}
         IEnumerable<Category> Categories {get;}
         IEnumerable<Meal> Meals {get;}

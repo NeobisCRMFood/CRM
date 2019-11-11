@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ControllerWork
 {
+    ///[Authorize(Roles = "barman")]
     [Route("api/[controller]")]
     [ApiController]
     public class BarmanController : ControllerBase
@@ -38,7 +40,7 @@ namespace API.Controllers.ControllerWork
                     comment = o.Comment,
                     mealsList = o.MealOrders.Select(mo => new
                     {
-                        departmentName = mo.Meal.Category.Department.Name,
+                        departmentName = mo.Meal.Category.Department.ToString(),
                         mealId = mo.MealId,
                         mealName = mo.Meal.Name,
                         quantity = mo.Quantity,
@@ -54,11 +56,10 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> CloseDrink([FromBody]MealReadyModel model)
         {
-            if (!ModelState.IsValid)
+            if (model.MealId <= 0 || model.OrderId <= 0)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = 400, message = "Json model is not valid"});
             }
-
             var order = await _context.Orders.Include(mo => mo.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
 
@@ -81,25 +82,33 @@ namespace API.Controllers.ControllerWork
                 }
                 return CreatedAtAction("GetOrder", new { id = order.Id }, order);
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Order or drink was not found"});
         }
 
         [Route("getMeals")]
         [HttpGet]
         public IActionResult GetMeals()
         {
-            var meals = _context.Meals;
+            var meals = _context.Meals.Select(m => new
+            {
+                id = m.Id,
+                name = m.Name,
+                description = m.Description,
+                department = m.Category.Department.ToString(),
+                category = m.Category.Name,
+                price = m.Price,
+                weight = m.Weight,
+                status = m.MealStatus.ToString(),
+                image = m.ImageURL
+            });
             return Ok(meals);
         }
+
 
         [Route("changeMealStatus/{id}")]
         [HttpPut]
         public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
             if (meal != null)
             {
@@ -122,16 +131,12 @@ namespace API.Controllers.ControllerWork
                     return Ok(meal);
                 }
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Meal was not Found" });
         }
 
         [HttpPut("closeOrder/{id}")]
         public async Task<IActionResult> CloseOrder([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
             if (order != null)
             {
@@ -140,7 +145,7 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
                 return CreatedAtAction("GetOrder", new { id = order.Id }, order);
             }
-            return NotFound();
+            return NotFound(new { status = 404, message = "Order was not Found" });
         }
     }
 }

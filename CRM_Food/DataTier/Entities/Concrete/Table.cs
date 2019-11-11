@@ -9,7 +9,6 @@ namespace DataTier.Entities.Concrete
 {
     public class Table
     {
-        [JsonIgnore]
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Заполните имя")]
