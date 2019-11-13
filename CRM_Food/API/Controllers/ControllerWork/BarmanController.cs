@@ -43,7 +43,7 @@ namespace API.Controllers.ControllerWork
                         departmentName = mo.Meal.Category.Department.ToString(),
                         mealId = mo.MealId,
                         mealName = mo.Meal.Name,
-                        quantity = mo.Quantity,
+                        quantity = mo.OrderedQuantity,
                         statusId = mo.MealOrderStatus,
                         status = mo.MealOrderStatus.ToString()
                     }),

@@ -16,13 +16,8 @@ namespace DataTier.Entities.Concrete
         public int TableId { get; set; }
         [JsonIgnore]
         public Table Table { get; set; }
-        private DateTime? dateTimeOrdered;
         [JsonIgnore]
-        public DateTime DateTimeOrdered
-        {
-            get { return dateTimeOrdered ?? DateTime.UtcNow; }
-            set { dateTimeOrdered = value; }
-        }
+        public DateTime DateTimeOrdered { get; set; }
         [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
         [JsonIgnore]

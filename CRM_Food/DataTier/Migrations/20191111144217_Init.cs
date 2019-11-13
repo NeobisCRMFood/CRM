@@ -1,6 +1,6 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace DataTier.Migrations
 {
@@ -13,7 +13,7 @@ namespace DataTier.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Name = table.Column<string>(nullable: false),
                     Department = table.Column<int>(nullable: false),
                     ImageURL = table.Column<string>(nullable: true)
@@ -28,7 +28,7 @@ namespace DataTier.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Name = table.Column<string>(nullable: false),
                     Status = table.Column<int>(nullable: false),
                     BookDate = table.Column<DateTime>(nullable: true)
@@ -43,7 +43,7 @@ namespace DataTier.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     FirstName = table.Column<string>(nullable: false),
                     LastName = table.Column<string>(nullable: false),
                     MiddleName = table.Column<string>(nullable: true),
@@ -68,7 +68,7 @@ namespace DataTier.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     CategoryId = table.Column<int>(nullable: false),
                     Name = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: false),
@@ -93,7 +93,7 @@ namespace DataTier.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     UserId = table.Column<int>(nullable: false),
                     TableId = table.Column<int>(nullable: false),
                     DateTimeOrdered = table.Column<DateTime>(nullable: false),
@@ -125,7 +125,8 @@ namespace DataTier.Migrations
                 {
                     OrderId = table.Column<int>(nullable: false),
                     MealId = table.Column<int>(nullable: false),
-                    Quantity = table.Column<int>(nullable: false),
+                    OrderedQuantity = table.Column<int>(nullable: false),
+                    FinishedQuantity = table.Column<int>(nullable: true),
                     MealOrderStatus = table.Column<int>(nullable: false)
                 },
                 constraints: table =>

@@ -26,31 +26,6 @@ namespace API.Controllers.ControllerWork
             _hubContext = hubContext;
         }
 
-        [Route("getActiveOrders")]
-        [HttpGet]
-        public IActionResult ActiveOrders()
-        {
-            var orders = _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.BarCooked)
-                .Select(o => new
-                {
-                    orderId = o.Id,
-                    dateTimeOrdered = o.DateTimeOrdered,
-                    comment = o.Comment,
-                    mealsList = o.MealOrders.Select(mo => new
-                    {
-                        departmentName = mo.Meal.Category.Department.ToString(),
-                        mealId = mo.MealId,
-                        mealName = mo.Meal.Name,
-                        quantity = mo.Quantity,
-                        statusId = mo.MealOrderStatus,
-                        status = mo.MealOrderStatus.ToString()
-                    }),
-                    orderStatus = o.OrderStatus.ToString()
-                }).OrderBy(o => o.dateTimeOrdered);
-            return Ok(orders);
-        }
-
         [Route("getMeals")]
         [HttpGet]
         public IActionResult GetMeals()
@@ -70,14 +45,158 @@ namespace API.Controllers.ControllerWork
             return Ok(meals);
         }
 
-        [Route("changeMealStatus/{id}")]
-        [HttpPut]
-        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
+        [Route("getActiveOrders")]
+        [HttpGet]
+        public IActionResult ActiveOrders()
+        {
+            var orders = _context.Orders
+                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.BarCooked)
+                .Select(o => new
+                {
+                    orderId = o.Id,
+                    dateTimeOrdered = o.DateTimeOrdered,
+                    comment = o.Comment,
+                    mealsList = o.MealOrders.Select(mo => new
+                    {
+                        departmentName = mo.Meal.Category.Department.ToString(),
+                        mealId = mo.MealId,
+                        mealName = mo.Meal.Name,
+                        orderedQuantity = mo.OrderedQuantity,
+                        finishedQuantity = mo.FinishedQuantity,
+                        statusId = mo.MealOrderStatus,
+                        status = mo.MealOrderStatus.ToString()
+                    }),
+                    orderStatus = o.OrderStatus.ToString()
+                }).OrderBy(o => o.dateTimeOrdered);
+            return Ok(orders);
+        }
+
+        [HttpGet("GetOrder/{id}")]
+        private async Task<IActionResult> GetOrder([FromRoute] int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(order);
+        }
+
+        [Route("finishMeal")]
+        [HttpPost]
+        public async Task<IActionResult> FinishMeal([FromBody] MealReadyModel model)
+        {
+            var mealOrder = _context.MealOrders
+                .Include(mo => mo.Order)
+                .Include(mo => mo.Meal)
+                .FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
+
+            if (mealOrder == null)
+            {
+                return NotFound(new { status = "error", message = "Order or meal was not found" });
+            }
+            int finishedQuantity = mealOrder.FinishedQuantity + model.FinishedQuantity;
+            if (mealOrder.OrderedQuantity < finishedQuantity)
+            {
+                return BadRequest(new { status = "error", message = "Finished quantity can't be more than ordered quantity" });
+            }
+            else if (mealOrder.OrderedQuantity > finishedQuantity)
+            {
+                mealOrder.FinishedQuantity = finishedQuantity;
+            }
+            else
+            {
+                mealOrder.FinishedQuantity = finishedQuantity;
+                mealOrder.MealOrderStatus = MealOrderStatus.Ready;
+            }
+            
+            await _context.SaveChangesAsync();
+            //string message = $"Стол: {mealOrder.Order.Table.Name} блюдо {mealOrder.Meal.Name} готово";
+            //await _hubContext.Clients.User(mealOrder.Order.UserId.ToString()).SendAsync($"Notify", message);
+
+            return Ok(new { status = "success", message = "Meals finished" });
+        }
+
+        [Route("freezeMeal")]
+        [HttpPost]
+        public async Task<IActionResult> FreezeMeal(FreezeMealModel model)
+        {
+            var mealOrder = _context.MealOrders
+                .Include(mo => mo.Order)
+                .Include(mo => mo.Meal)
+                .FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
+            if (mealOrder == null)
+            {
+                return NotFound(new { status = "error", message = "Order or meal was not found" });
+            }
+            if (mealOrder.MealOrderStatus != MealOrderStatus.Ready && mealOrder.MealOrderStatus != MealOrderStatus.Freezed)
+            {
+                int haveNoMeals = mealOrder.OrderedQuantity - mealOrder.FinishedQuantity;
+                mealOrder.MealOrderStatus = MealOrderStatus.Freezed;
+                var meal = _context.Meals.FirstOrDefault(m => m.Id == model.MealId);
+                meal.MealStatus = MealStatus.HaveNot;
+                await _context.SaveChangesAsync();
+                //string message = 
+                //    $"Не хватает ингредиентов на {haveNoMeals} порций " +
+                //    $"Стол: {mealOrder.Order.Table.Name} " +
+                //    $"Блюдо: {mealOrder.Meal.Name}";
+                //await _hubContext.Clients.User(mealOrder.Order.UserId.ToString()).SendAsync($"Notify", message);
+                return Ok(new { status = "success", message = "Meals freezed" });
+            }
+            return BadRequest(new {status = "error", message = "Meal is freezed or ready" });
+        }
+
+        [Route("closeMeal")]
+        [HttpPost]
+        public async Task<IActionResult> CloseMeal([FromBody]CloseMealModel model)
+        {
+            var mealOrder = _context.MealOrders
+                .Include(mo => mo.Order)
+                .Include(mo => mo.Meal)
+                .FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
+
+            if (mealOrder != null)
+            {
+                mealOrder.FinishedQuantity = mealOrder.OrderedQuantity;
+                mealOrder.MealOrderStatus = MealOrderStatus.Ready;
+                _context.Entry(mealOrder).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                //var userId = User.Claims.First(i => i.Type == "UserId").Value;
+
+                //string message = $"Стол: {mealOrder.Order.Table.Name}, Все блюда: {mealOrder.Meal.Name} готовы";
+                //await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
+
+                return Ok(new { status = "success", message = "Meal is ready now" }); ;
+            }
+            return NotFound(new { status = 404, message = "MealOrder was not found" });
+        }
+       
+
+        [HttpPut("closeOrder/{id}")]
+        public async Task<IActionResult> CloseOrder([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
+            if (order != null)
+            {
+                order.OrderStatus = OrderStatus.MealCooked;
+                _context.Entry(order).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("GetOrder", new { id = order.Id}, order);
+            }
+            return NotFound(new { status = 404, message = "Order was not Found" });
+        }
+
+        [Route("changeMealStatus/{id}")]
+        [HttpPut]
+        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
+        {
             var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
             if (meal != null)
             {
@@ -87,7 +206,7 @@ namespace API.Controllers.ControllerWork
                     await _context.SaveChangesAsync();
 
                     //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
-                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(User.Claims.FirstOrDefault(us => us.Type == "UserId").Value));
                     //if (user.Role == Role.admin || user.Role == Role.cook)
                     //{
                     //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
@@ -111,71 +230,5 @@ namespace API.Controllers.ControllerWork
             return NotFound(new { status = 404, message = "Drink was not Found" });
         }
 
-        [HttpGet("GetOrder/{id}")]
-        private async Task<IActionResult> GetOrder([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var order = await _context.Orders.FindAsync(id);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(order);
-        }
-
-        [Route("closeMeal")]
-        [HttpPost]
-        public async Task<IActionResult> CloseMeal([FromBody]MealReadyModel model)
-        {
-
-
-            var order = await _context.Orders.Include(mo => mo.MealOrders).FirstOrDefaultAsync(o => o.Id == model.OrderId);
-            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == model.MealId);
-
-            if (order != null && meal != null)
-            {
-                using (var transaction = _context.Database.BeginTransaction())
-                {
-                    var mealOrder = order.MealOrders.FirstOrDefault(mo => mo.MealId == meal.Id);
-                    mealOrder.MealOrderStatus = MealOrderStatus.Ready;
-                    _context.Entry(mealOrder).State = EntityState.Modified;
-                    await _context.SaveChangesAsync();
-
-                    //var userId = User.Claims.First(i => i.Type == "UserId").Value;
-                    //if (int.Parse(userId) == order.UserId)
-                    //{
-                    //    string message = $"Стол: {order.Table.Name}, Блюдо: {order.MealOrders.Select(mo => mo.Meal.Name)}";
-                    //    await _hubContext.Clients.User(userId).SendAsync($"Notify", message);
-                    //}
-                    transaction.Commit();
-                }
-                return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-            }
-            return NotFound(new { status = 404, message = "Order or meal was not found" });
-        }
-
-        [HttpPut("closeOrder/{id}")]
-        public async Task<IActionResult> CloseOrder([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
-            if (order != null)
-            {
-                order.OrderStatus = OrderStatus.MealCooked;
-                _context.Entry(order).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                return CreatedAtAction("GetOrder", new { id = order.Id}, order);
-            }
-            return NotFound(new { status = 404, message = "Order was not Found" });
-        }
     }
 }

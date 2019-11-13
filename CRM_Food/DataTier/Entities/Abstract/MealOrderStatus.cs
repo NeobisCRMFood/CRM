@@ -7,6 +7,7 @@ namespace DataTier.Entities.Abstract
     public enum MealOrderStatus
     {
         NotReady = 0,
-        Ready = 1
+        Ready = 1,
+        Freezed = 2
     }
 }

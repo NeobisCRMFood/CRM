@@ -14,7 +14,8 @@ namespace DataTier.Entities.Concrete
         public int MealId { get; set; }
         [JsonIgnore]
         public Meal Meal { get; set; }
-        public int Quantity { get; set; }
+        public int OrderedQuantity { get; set; }
+        public int FinishedQuantity { get; set; }
         [JsonIgnore]
         public MealOrderStatus MealOrderStatus { get; set; }
     }
