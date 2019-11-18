@@ -1,10 +1,23 @@
-﻿using System;
+﻿using DataTier.Entities.Concrete;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Models
 {
+    public class CreateOrderModel
+    {
+        [Required(ErrorMessage = "Укажите Id стола")]
+        public int TableId { get; set; }
+        public string Comment { get; set; }
+        public ICollection<MealOrder> MealOrders { get; set; }
+        public CreateOrderModel()
+        {
+            MealOrders = new List<MealOrder>();
+        }
+    }
     public class AddMealOrderModel
     {
         public int OrderId { get; set; }

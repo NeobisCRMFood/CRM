@@ -14,7 +14,7 @@ namespace API.Models
 
     public class FreezeMealModel : CloseMealModel
     {
-
+        public int FreezedMeals { get; set; }
     }
 
     public class CloseMealModel

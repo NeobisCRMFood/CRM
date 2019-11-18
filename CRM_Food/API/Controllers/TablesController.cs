@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
 
 namespace API.Controllers
 {
@@ -90,12 +91,12 @@ namespace API.Controllers
 
         // POST: api/Tables
         [HttpPost]
-        public async Task<IActionResult> PostTable([FromBody] Table table)
+        public async Task<IActionResult> PostTable([FromBody] TableModel model)
         {
-            if (!ModelState.IsValid)
+            var table = new Table()
             {
-                return BadRequest(ModelState);
-            }
+                Name = model.Name
+            };
             var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name);
             if (tableExists != null)
             {

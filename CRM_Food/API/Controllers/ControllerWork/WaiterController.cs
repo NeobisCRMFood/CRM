@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "waiter")]
+    [Authorize(Roles = "waiter")]
     [Route("api/[controller]")]
     [ApiController]
     public class WaiterController : ControllerBase
@@ -31,16 +31,15 @@ namespace API.Controllers.ControllerWork
         public IActionResult GetOrders()
         {
             var orders = _context.Orders
-                //.Where(o => o.UserId == GetUserId())
+                .Where(o => o.UserId == GetUserId())
                 .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.MealCooked || o.OrderStatus == OrderStatus.BarCooked)
                 .Select(o => new
                 {
                     id = o.Id,
-                    tableId = o.TableId,
                     tableName = o.Table.Name,
                     mealOrders = o.MealOrders.Select(mo => new
                     {
-                        mealId = mo.MealId,
+                        meal = mo.Meal.Name,
                         status = mo.MealOrderStatus.ToString()
                     })
                 });
@@ -52,7 +51,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult GetFinishedOrders()
         {
             var orders = _context.Orders
-                //.Where(o => o.UserId == GetUserId())
+                .Where(o => o.UserId == GetUserId())
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Select(o => new
                 {
@@ -67,7 +66,7 @@ namespace API.Controllers.ControllerWork
             return Ok(orders);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("getOrder/{id}")]
         public async Task<IActionResult> GetOrder([FromRoute] int id)
         {
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
@@ -128,7 +127,9 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult GetWaiterStatistics()
         {
-            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            var statisctics = _context.Users
+                .Where(u => u.Id == GetUserId())
+                .Select(u => new
             {
                 orderCount = u.Orders.Count(),
 
@@ -136,67 +137,67 @@ namespace API.Controllers.ControllerWork
                 .Select(o => o.TotalPrice)
                 .Sum()
             });
-            return Ok(statisctics);
-        }
 
-        [Route("GetWaiterStatisticsToday")]
-        [HttpGet]
-        public IActionResult GetWaiterStatisticsToday()
-        {
-            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
-            {
-                orderCount = u.Orders
+            var statiscticsToday = _context.Users
+                .Where(u => u.Id == GetUserId())
+                .Select(u => new
+                {
+                    orderCount = u.Orders
                 .Where(o => o.DateTimeClosed >= DateTime.Today)
                 .Count(),
 
-                totalSum = u.Orders
+                    totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.Today)
                 .Select(o => o.TotalPrice).Sum()
-            });
-            return Ok(statisctics);
-        }
+                });
 
-        [Route("GetWaiterStatisticsWeek")]
-        [HttpGet]
-        public IActionResult GetWaiterStatisticsWeek()
-        {
-            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
-            {
-                orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .Count(),
+            var statiscticsWeek = _context.Users
+                .Where(u => u.Id == GetUserId())
+                .Select(u => new
+                {
+                    orderCount = u.Orders
+                    .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                    .Count(),
 
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .Select(o => o.TotalPrice).Sum()
-            });
-            return Ok(statisctics);
-        }
+                    totalSum = u.Orders
+                    .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                    .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                    .Select(o => o.TotalPrice).Sum()
+                });
 
-        [Route("GetWaiterStatisticsMonth")]
-        [HttpGet]
-        public IActionResult GetWaiterStatisticsMonth()
-        {
-            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
-            {
-                orderCount = u.Orders
+            var statiscticsMonth = _context.Users
+                .Where(u => u.Id == GetUserId())
+                .Select(u => new
+                {
+                    orderCount = u.Orders
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
                 .Count(),
 
-                totalSum = u.Orders
+                    totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
                 .Select(o => o.TotalPrice).Sum()
-            });
-            return Ok(statisctics);
-        }
+                });
 
+            return Ok(new { statisctics, statiscticsMonth, statiscticsWeek, statiscticsToday});
+        }
+        
         [Route("createOrder")]
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] Order order)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderModel model)
         {
+            var order = new Order()
+            {
+                UserId = GetUserId(),
+                TableId = model.TableId,
+                Comment = model.Comment,
+                MealOrders = model.MealOrders
+            };
+            if (order.MealOrders == null)
+            {
+                return BadRequest(new { status = "error", message = "Meals can't be null"});
+            }
             using (var transaction = _context.Database.BeginTransaction())
             {
                 order.DateTimeOrdered = DateTime.UtcNow;
@@ -241,7 +242,9 @@ namespace API.Controllers.ControllerWork
                     var mo = new MealOrder
                     {
                         OrderId = order.Id,
-                        MealId = item.MealId,
+                        MealId = item.MealId
+                        
+                        ,
                         OrderedQuantity = item.AddQuantity,
                         FinishedQuantity = 0,
                         MealOrderStatus = MealOrderStatus.NotReady
@@ -321,6 +324,7 @@ namespace API.Controllers.ControllerWork
         public async Task<IActionResult> DeleteFreezedMeals([FromBody] DeleteFreezedMealModel model)
         {
             var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
+
             if (mealOrder == null)
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
@@ -329,6 +333,7 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Meals can't be not ready or ready"});
             }
+
             mealOrder.OrderedQuantity = mealOrder.FinishedQuantity;
             mealOrder.MealOrderStatus = MealOrderStatus.Ready;
             _context.Entry(mealOrder).State = EntityState.Modified;
@@ -349,10 +354,13 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders
                 .Include(o => o.Table)
                 .FirstOrDefaultAsync(o => o.Id == model.OrderId);
-
+            if (order.UserId != GetUserId())
+            {
+                return BadRequest(new { status = "error", message = "You can't close foreign user Order"});
+            }
             if (order == null)
             {
-                return NotFound(new { status = "error", message = "Order was not found"});
+                return NotFound(new { status = "error", message = "Order was not found" });
             }
             if (order.OrderStatus == OrderStatus.Active || order.OrderStatus == OrderStatus.MealCooked || order.OrderStatus == OrderStatus.BarCooked)
             {
@@ -377,7 +385,7 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
                 return CreatedAtAction("getOrder", new { id = order.Id }, order);
             }
-            return BadRequest(new { status = "error", message = "Order is not active"});
+            return BadRequest(new { status = "error", message = "Order is not active" });
         }
 
         [Route("GetWaiterStatisticsRange")]
@@ -388,7 +396,9 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
-            var statisctics = _context.Users.Where(u => u.Id == GetUserId()).Select(u => new
+            var statisctics = _context.Users
+                .Where(u => u.Id == GetUserId())
+                .Select(u => new
             {
                 orderCount = u.Orders
                 .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= o.DateTimeClosed)
@@ -402,6 +412,8 @@ namespace API.Controllers.ControllerWork
             });
             return Ok(statisctics);
         }
+
+
 
         private bool OrderExists(int id)
         {

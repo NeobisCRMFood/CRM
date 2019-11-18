@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
 
 namespace API.Controllers
 {
@@ -87,12 +88,14 @@ namespace API.Controllers
 
         // POST: api/Categories
         [HttpPost]
-        public async Task<IActionResult> PostCategory([FromBody] Category category)
+        public async Task<IActionResult> PostCategory([FromBody] CategoryModel model)
         {
-            if (!ModelState.IsValid)
+            var category = new Category()
             {
-                return BadRequest(ModelState);
-            }
+                Name = model.Name,
+                Department = model.Department,
+                ImageURL = model.ImageURL
+            };
             var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name);
             if (categoryExist != null)
             {

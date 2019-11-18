@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
 
 namespace API.Controllers
 {
@@ -90,12 +91,17 @@ namespace API.Controllers
 
         // POST: api/Meals
         [HttpPost]
-        public async Task<IActionResult> PostMeal([FromBody] Meal meal)
+        public async Task<IActionResult> PostMeal([FromBody] MealModel model)
         {
-            if (!ModelState.IsValid)
+            var meal = new Meal()
             {
-                return BadRequest(ModelState);
-            }
+                CategoryId = model.CategoryId,
+                Name = model.Name,
+                Price = model.Price,
+                ImageURL = model.ImageURL,
+                Weight = model.Weight,
+                Description = model.Description
+            };
             var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight);
             if (mealExists != null)
             {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
 
 namespace API.Controllers
 {
@@ -95,12 +96,24 @@ namespace API.Controllers
 
         // POST: api/Users
         [HttpPost]
-        public async Task<IActionResult> PostUser([FromBody] User user)
+        public async Task<IActionResult> PostUser([FromBody] UserModel model)
         {
-            if (!ModelState.IsValid)
+            var user = new User()
             {
-                return BadRequest(ModelState);
-            }
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                MiddleName = model.MiddleName,
+                Email = model.Email,
+                Gender = model.Gender,
+                Login = model.Login,
+                Password = model.Password,
+                PhoneNumber = model.PhoneNumber,
+                Role = model.Role,
+                DateBorn = model.DateBorn,
+                StartWorkDay = model.StartWorkDay,
+                Comment = model.Comment,
+                ImageURL = model.ImageURL
+            };
             var userExist = _context.Users.FirstOrDefault(u => u.Login == user.Login);
             if (userExist != null)
             {

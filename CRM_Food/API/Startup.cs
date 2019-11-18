@@ -22,17 +22,14 @@ namespace API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()
                        .AllowAnyMethod()
                        .AllowAnyHeader();
             }));
-
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -51,20 +48,18 @@ namespace API
                     };
                 });
             services.AddSignalR();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddJsonOptions(options =>
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
                 options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
             });
-
             services.AddDbContext<EFDbContext>();
-
             services.IoCCommonDataLibraryRegister();
 
             services.AddSwaggerGen(c =>
-               {
-                   c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
-               });
+            {
+                c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -82,7 +77,7 @@ namespace API
             }
 
             app.UseHttpsRedirection();
-            app.UseSignalR(routes => 
+            app.UseSignalR(routes =>
             {
                 routes.MapHub<FoodHub>("/order");
             });
@@ -90,7 +85,7 @@ namespace API
             app.UseMvc();
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => 
+            app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Food CRM API");
             });
