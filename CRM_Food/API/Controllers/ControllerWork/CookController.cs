@@ -152,7 +152,7 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
             if (order == null)
             {
-                return NotFound(new { status = 404, message = "Order was not Found" });
+                return NotFound(new { status = "error", message = "Order was not Found" });
             }
             order.OrderStatus = OrderStatus.MealCooked;
             _context.Entry(order).State = EntityState.Modified;

@@ -11,6 +11,7 @@ using API.Models;
 
 namespace API.Controllers
 {
+    //[Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class MealsController : ControllerBase

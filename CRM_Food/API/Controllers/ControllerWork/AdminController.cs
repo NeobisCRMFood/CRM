@@ -74,6 +74,7 @@ namespace API.Controllers.ControllerWork
         {
             var waiters = _context.Users.Where(u => u.Role == Role.waiter).Select(u => new
             {
+                id = u.Id,
                 name = u.LastName + " " + u.FirstName + " " + u.MiddleName,
                 login = u.Login,
                 password = u.Password
@@ -87,10 +88,12 @@ namespace API.Controllers.ControllerWork
         public async Task<IActionResult> GetWaiterStatistics([FromRoute] int id)
         {
             var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
             if (waiter.Role != Role.waiter)
             {
                 return BadRequest(new { status = "error", message = "User is not waiter" });
             }
+
             var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
                 orderCount = u.Orders
@@ -144,7 +147,6 @@ namespace API.Controllers.ControllerWork
             return Ok(new { statisctics, statiscticsToday, statiscticsWeek, statiscticsMonth});
         }
         
-
         [Route("totalSums")]
         [HttpGet]
         public async Task<IActionResult> TotalSum()
@@ -163,36 +165,47 @@ namespace API.Controllers.ControllerWork
             var totalSumDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
             var totalSumLastDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-1))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
             var totalSumWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
             var totalSumLastWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-14) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-7))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
             var totalSumMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
             var totalSumLastMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddMonths(-1))
-                .Select(o => o.TotalPrice).SumAsync();
+                .Select(o => o.TotalPrice)
+                .SumAsync();
 
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            var count = await _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).CountAsync();
+            var totalPrices = _context.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Select(o => o.TotalPrice);
+            var sum = await totalPrices
+                .SumAsync();
+            var count = await _context.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .CountAsync();
             var totalSumAverage = sum / count;
 
             return Ok(new {  
@@ -260,9 +273,161 @@ namespace API.Controllers.ControllerWork
                 totalOrdersWeek,
                 totalOrdersLastWeek,
                 totalOrdersDay,
-                totalOrdersLastDay,
-                
+                totalOrdersLastDay
             });
+        }
+
+        [Route("kitchenTotalSums")]
+        [HttpGet]
+        public async Task<IActionResult> KitchenTotalSums()
+        {
+            var totalSum = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.Meal.Price)
+                .SumAsync();
+
+            var totalSumMonth = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.Meal.Price)
+                .SumAsync();
+
+            var totalSumWeek = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.Meal.Price)
+                .SumAsync();
+
+            var totalSumDay = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.Meal.Price)
+                .SumAsync();
+
+            return Ok(new { 
+                totalSum, 
+                totalSumMonth, 
+                totalSumWeek, 
+                totalSumDay
+            });
+        }
+
+        [Route("kitchenTotalMeals")]
+        [HttpGet]
+        public async Task<IActionResult> KitchenTotalMeals()
+        {
+            var totalMeals = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsMonth = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsWeek = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsToday = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            return Ok(new 
+            {
+                totalMeals,
+                totalMealsMonth,
+                totalMealsWeek,
+                totalMealsToday
+            });
+        }
+
+        [Route("barTotalMeals")]
+        [HttpGet]
+        public async Task<IActionResult> BarTotalMeals()
+        {
+            var totalMeals = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsMonth = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsWeek = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            var totalMealsToday = await _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.MealId)
+                .CountAsync();
+
+            return Ok(new
+            {
+                totalMeals,
+                totalMealsMonth,
+                totalMealsWeek,
+                totalMealsToday
+            });
+        }
+
+        [Route("barTotalSums")]
+        [HttpGet]
+        public IActionResult BarTotalSums()
+        {
+            var totalSum = _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.Meal.Price)
+                .Sum();
+
+            var totalSumMonth = _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.Meal.Price)
+                .Sum();
+
+            var totalSumWeek = _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.Meal.Price)
+                .Sum();
+
+            var totalSumDay = _context.MealOrders
+                .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Meal.Category.Department == Department.Bar)
+                .Select(mo => mo.Meal.Price)
+                .Sum();
+
+            return Ok(new { totalSum, totalSumMonth, totalSumWeek, totalSumDay });
         }
 
         [Route("topMeals")]
@@ -287,6 +452,123 @@ namespace API.Controllers.ControllerWork
             return Ok(meals);
         }
 
+        #region Топ блюд по сезонам
+
+        [Route("topMealsWinter")]
+        [HttpGet]
+        public IActionResult SalesByMealWinter()
+        {
+            if (DateTime.IsLeapYear(DateTime.UtcNow.Year))
+            {
+                var leapYearMeals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 29))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(leapYearMeals);
+            }
+
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 28))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        [Route("topMealsSpring")]
+        [HttpGet]
+        public IActionResult SalesByMealSpring()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 5, 31))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count);
+            return Ok(meals);
+        }
+
+        [Route("topMealsSummer")]
+        [HttpGet]
+        public IActionResult SalesByMealSummer()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 9, 31))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        [Route("topMealsAutumn")]
+        [HttpGet]
+        public IActionResult SalesByMealAutumn()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 11, 30))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        #endregion
+
         [Route("topDrinks")]
         [HttpGet]
         public IActionResult SalesByDrink()
@@ -309,6 +591,123 @@ namespace API.Controllers.ControllerWork
             return Ok(meals);
         }
 
+        #region Топ алкоголя по сезонам
+
+        [Route("topDrinksWinter")]
+        [HttpGet]
+        public IActionResult SalesByMealDrinks()
+        {
+            if (DateTime.IsLeapYear(DateTime.UtcNow.Year))
+            {
+                var leapYearMeals = _context.Meals
+                .Where(m => m.Category.Department == Department.Bar)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 29))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+                return Ok(leapYearMeals);
+            }
+
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Kitchen)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 28))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        [Route("topDrinksSpring")]
+        [HttpGet]
+        public IActionResult SalesByDrinksSpring()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Bar)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 5, 31))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count);
+            return Ok(meals);
+        }
+
+        [Route("topDrinksSummer")]
+        [HttpGet]
+        public IActionResult SalesByDrinksSummer()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Bar)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 9, 31))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        [Route("topDrinksAutumn")]
+        [HttpGet]
+        public IActionResult SalesByDrinksAutumn()
+        {
+            var meals = _context.Meals
+                .Where(m => m.Category.Department == Department.Bar)
+                .Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    count = m.MealOrders
+                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 11, 30))
+                    .Select(mo => new
+                    {
+                        mo.OrderId
+                    })
+                .Count()
+                })
+            .OrderByDescending(mo => mo.count).Take(10);
+            return Ok(meals);
+        }
+
+        #endregion
+
         [Route("transactionHistory")]
         [HttpGet]
         public IActionResult LatestOrders()
@@ -327,6 +726,27 @@ namespace API.Controllers.ControllerWork
             return Ok(orders);
         }
 
+        [Route("bestWaiter")]
+        [HttpGet]
+        public IActionResult BestWaiter()
+        {
+            var users = _context.Users.Where(u => u.Role == Role.waiter);
+            if (users == null)
+            {
+                return BadRequest(new { status = "error", message = "Have no waiters" });
+            }
+            var top = users.Select(u => new
+            {
+                id = u.Id,
+                name = u.LastName + " " +u.FirstName,
+                orderCount = u.Orders
+                .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Count()
+            })
+            .OrderByDescending(u => u.orderCount).Take(1);
+            return Ok(top);
+        }
+
         [Route("waiterOrderTop")]
         [HttpGet]
         public IActionResult WaiterTop()
@@ -334,11 +754,12 @@ namespace API.Controllers.ControllerWork
             var users = _context.Users.Where(u => u.Role == Role.waiter);
             if (users == null)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Have no waiters"});
             }
             var top = users.Select(u => new
             {
-                name = u.LastName + u.FirstName,
+                id = u.Id,
+                name = u.LastName + " " + u.FirstName,
                 orderCount = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
                 .Count()
@@ -352,13 +773,16 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult WaiterSumTop()
         {
-            var users = _context.Users.Where(u => u.Role == Role.waiter);
-            var waitersSumTop = users.Select(u => new
-            {
-                userName = u.LastName + " " + u.FirstName,
-                sum = _context.MealOrders.Where(mo => mo.Order.UserId == u.Id)
-                .Select(mo => mo.Order.TotalPrice).Sum()
-            });
+            var waitersSumTop = _context.Users
+                .Where(u => u.Role == Role.waiter)
+                .Select(u => new
+                {
+                    id = u.Id,
+                    userName = u.LastName + " " + u.FirstName,
+                    sum = _context.MealOrders.Where(mo => mo.Order.UserId == u.Id)
+                    .Select(mo => mo.Order.TotalPrice)
+                    .Sum()
+                }).OrderBy(mo => mo.sum);
             return Ok(waitersSumTop);
         }
 
@@ -370,6 +794,7 @@ namespace API.Controllers.ControllerWork
                 .Where(m => m.Category.Department == Department.Kitchen)
                 .Select(m => new
                 {
+                    id = m.Id,
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -391,6 +816,7 @@ namespace API.Controllers.ControllerWork
                .Where(m => m.Category.Department == Department.Kitchen)
                .Select(m => new
                {
+                   id = m.Id,
                    name = m.Name,
                    sum = m.Price * m.MealOrders
                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -407,24 +833,28 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult KitchenWaiterMealStatistics()
         {
-            var users = _context.Users.Where(u => u.Role == Role.waiter);
-            var waitersSumTop = users.Select(u => new
-            {
-                userName = u.LastName + " " + u.FirstName,
-                meals = _context.Meals.Where(m => m.Category.Department == Department.Kitchen)
-                .Select(m => new
+            var waitersMealTop = _context.Users
+                .Where(u => u.Role == Role.waiter)
+                .Select(u => new
                 {
-                    mealName = m.Name,
-                    sum = m.Price * m.MealOrders
-                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.UserId == u.Id)
-                    .Select(mo => new
+                    userId = u.Id,
+                    userName = u.LastName + " " + u.FirstName,
+                    meals = _context.Meals.Where(m => m.Category.Department == Department.Kitchen)
+                    .Select(m => new
                     {
-                        mo.OrderId
-                    }).Count()
-                }).OrderByDescending(mo => mo.sum)
+                        mealId = m.Id,
+                        mealName = m.Name,
+                        count = m.MealOrders
+                        .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                        .Where(mo => mo.Order.UserId == u.Id)
+                        .Select(mo => new
+                        {
+                            mo.OrderId
+                        })
+                    .Count()
+                }).OrderByDescending(mo => mo.count)
             });
-            return Ok(waitersSumTop);
+            return Ok(waitersMealTop);
         }
 
         [Route("kitchenWaiterSumStatistics")]
@@ -434,10 +864,12 @@ namespace API.Controllers.ControllerWork
             var users = _context.Users.Where(u => u.Role == Role.waiter);
             var waitersSumTop = users.Select(u => new
             {
+                userId = u.Id,
                 userName = u.LastName + " " + u.FirstName,
                 meals = _context.Meals.Where(m => m.Category.Department == Department.Kitchen)
                 .Select(m => new
                 {
+                    mealId  = m.Id,
                     mealName = m.Name,
                     sum = m.Price * m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -459,6 +891,7 @@ namespace API.Controllers.ControllerWork
                 .Where(m => m.Category.Department == Department.Bar)
                 .Select(m => new
                 {
+                    id = m.Id,
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -480,6 +913,7 @@ namespace API.Controllers.ControllerWork
                    .Where(m => m.Category.Department == Department.Bar)
                    .Select(m => new
                    {
+                       id = m.Id,
                        name = m.Name,
                        sum = m.Price * m.MealOrders
                        .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -499,11 +933,13 @@ namespace API.Controllers.ControllerWork
             var users = _context.Users.Where(u => u.Role == Role.waiter);
             var waiterMealTop = users.Select(u => new
             {
+                userId = u.Id,
                 userName = u.LastName + " " + u.FirstName,
                 meals = _context.Meals
                 .Where(m => m.Category.Department == Department.Bar)
                 .Select(m => new
                 {
+                    mealId = m.Id,
                     mealName = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -524,11 +960,13 @@ namespace API.Controllers.ControllerWork
             var users = _context.Users.Where(u => u.Role == Role.waiter);
             var waitersSumTop = users.Select(u => new
             {
+                userId = u.Id,
                 userName = u.LastName + " " + u.FirstName,
                 meals = _context.Meals
                 .Where(m => m.Category.Department == Department.Bar)
                 .Select(m => new
                 {
+                    mealId = m.Id,
                     mealName = m.Name,
                     sum = m.Price * m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
@@ -668,26 +1106,12 @@ namespace API.Controllers.ControllerWork
                 {
                     meal.MealStatus = MealStatus.HaveNot;
                     await _context.SaveChangesAsync();
-
-                    //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
-                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
-                    //if (user.Role == Role.admin || user.Role == Role.cook)
-                    //{
-                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
-                    //}
                     return Ok(meal);
                 }
                 else if (meal.MealStatus == MealStatus.HaveNot)
                 {
                     meal.MealStatus = MealStatus.Have;
                     await _context.SaveChangesAsync();
-
-                    //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
-                    //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
-                    //if (user.Role == Role.admin || user.Role == Role.cook)
-                    //{
-                    //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
-                    //}
                     return Ok(meal);
                 }
             }
@@ -710,6 +1134,7 @@ namespace API.Controllers.ControllerWork
                 {
                     return NotFound(new { status = "error", message = "Meal was not found in database" });
                 }
+
                 var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == order.Id && mo.MealId == item.MealId);
 
                 if (mealOrder == null)
@@ -741,7 +1166,7 @@ namespace API.Controllers.ControllerWork
                 }
                 else
                 {
-                    return BadRequest(new { status = "error", message = "This method can't delete meal from not ready or freezed MealOrder. Use deleteFreezedMeals" });
+                    return BadRequest(new { status = "error", message = "This method can't delete meal from not ready or freezed MealOrder" });
                 }
             }
             _context.Entry(order).State = EntityState.Modified;

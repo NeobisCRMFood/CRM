@@ -86,7 +86,7 @@ namespace API.Controllers.ControllerWork
                 {
                     id = t.Id,
                     name = t.Name,
-                    status = t.Status.ToString()
+                    status = t.Status
                 });
             return Ok(tables);
         }
@@ -139,7 +139,7 @@ namespace API.Controllers.ControllerWork
             });
 
             var statiscticsToday = _context.Users
-                .Where(u => u.Id == GetUserId())
+                //.Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders
@@ -153,7 +153,7 @@ namespace API.Controllers.ControllerWork
                 });
 
             var statiscticsWeek = _context.Users
-                .Where(u => u.Id == GetUserId())
+                //.Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders
@@ -167,7 +167,7 @@ namespace API.Controllers.ControllerWork
                 });
 
             var statiscticsMonth = _context.Users
-                .Where(u => u.Id == GetUserId())
+                //.Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders
@@ -187,6 +187,10 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderModel model)
         {
+            if (model.MealOrders == null)
+            {
+                return BadRequest(new { status = "error", message = "Meals can't be null" });
+            }
             var order = new Order()
             {
                 UserId = GetUserId(),
@@ -229,6 +233,10 @@ namespace API.Controllers.ControllerWork
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
             }
+            if (GetUserId() != order.UserId)
+            {
+                return BadRequest(new { staus = "error", message = "U can add meals only to own orders"});
+            }
             foreach (var item in model.MealOrders)
             {
                 var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == item.MealId);
@@ -242,9 +250,7 @@ namespace API.Controllers.ControllerWork
                     var mo = new MealOrder
                     {
                         OrderId = order.Id,
-                        MealId = item.MealId
-                        
-                        ,
+                        MealId = item.MealId,
                         OrderedQuantity = item.AddQuantity,
                         FinishedQuantity = 0,
                         MealOrderStatus = MealOrderStatus.NotReady
@@ -272,6 +278,10 @@ namespace API.Controllers.ControllerWork
             if (order == null)
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
+            }
+            if (GetUserId() != order.UserId)
+            {
+                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
             }
             foreach (var item in model.MealOrders)
             {
@@ -324,7 +334,10 @@ namespace API.Controllers.ControllerWork
         public async Task<IActionResult> DeleteFreezedMeals([FromBody] DeleteFreezedMealModel model)
         {
             var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
-
+            if (GetUserId() != mealOrder.Order.UserId)
+            {
+                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
+            }
             if (mealOrder == null)
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
@@ -351,16 +364,14 @@ namespace API.Controllers.ControllerWork
                 return BadRequest(new { status = "error", message = "Json model is not valid" });
             }
 
-            var order = await _context.Orders
-                .Include(o => o.Table)
-                .FirstOrDefaultAsync(o => o.Id == model.OrderId);
-            if (order.UserId != GetUserId())
-            {
-                return BadRequest(new { status = "error", message = "You can't close foreign user Order"});
-            }
+            var order = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             if (order == null)
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
+            }
+            if (GetUserId() != order.UserId)
+            {
+                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
             }
             if (order.OrderStatus == OrderStatus.Active || order.OrderStatus == OrderStatus.MealCooked || order.OrderStatus == OrderStatus.BarCooked)
             {
@@ -397,7 +408,7 @@ namespace API.Controllers.ControllerWork
                 return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
             var statisctics = _context.Users
-                .Where(u => u.Id == GetUserId())
+                //.Where(u => u.Id == GetUserId())
                 .Select(u => new
             {
                 orderCount = u.Orders
@@ -411,13 +422,6 @@ namespace API.Controllers.ControllerWork
                 .Sum()
             });
             return Ok(statisctics);
-        }
-
-
-
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.Id == id);
         }
 
         private int GetUserId()
