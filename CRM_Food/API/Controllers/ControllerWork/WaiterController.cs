@@ -117,7 +117,8 @@ namespace API.Controllers.ControllerWork
                         mealName = m.Name,
                         mealWeight = m.Weight,
                         mealStatus = m.MealStatus,
-                        price = m.Price
+                        price = m.Price,
+                        image = m.ImageURL
                     })
                 });
             return Ok(menu);
@@ -191,10 +192,15 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Meals can't be null" });
             }
+            if (TableIsNull(model.TableId))
+            {
+                return NotFound(new { status = "error", message = "Table is not exists in DB"});
+            }
             var order = new Order()
             {
                 UserId = GetUserId(),
                 TableId = model.TableId,
+                DateTimeOrdered = DateTime.UtcNow,
                 Comment = model.Comment,
                 MealOrders = model.MealOrders
             };
@@ -239,8 +245,7 @@ namespace API.Controllers.ControllerWork
             }
             foreach (var item in model.MealOrders)
             {
-                var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == item.MealId);
-                if (meal == null)
+                if (MealIsNull(item.MealId))
                 {
                     return NotFound(new { status = "error", message = "Meal was not found in database" });
                 }
@@ -285,13 +290,11 @@ namespace API.Controllers.ControllerWork
             }
             foreach (var item in model.MealOrders)
             {
-                var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == item.MealId);
-                if (meal == null)
+                if (MealIsNull(item.MealId))
                 {
                     return NotFound(new { status = "error", message = "Meal was not found in database" });
                 }
                 var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == order.Id && mo.MealId == item.MealId);
-
                 if (mealOrder == null)
                 {
                     return NotFound(new { status = "error", message = $"Meal {item.MealId} in Order {order.Id} is not exist" });
@@ -334,19 +337,18 @@ namespace API.Controllers.ControllerWork
         public async Task<IActionResult> DeleteFreezedMeals([FromBody] DeleteFreezedMealModel model)
         {
             var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
-            if (GetUserId() != mealOrder.Order.UserId)
-            {
-                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
-            }
             if (mealOrder == null)
             {
                 return NotFound(new { status = "error", message = "Order was not found" });
+            }
+            if (GetUserId() != mealOrder.Order.UserId)
+            {
+                return BadRequest(new { staus = "error", message = "You can add meals only to own orders" });
             }
             if (mealOrder.MealOrderStatus == MealOrderStatus.NotReady || mealOrder.MealOrderStatus == MealOrderStatus.Ready)
             {
                 return BadRequest(new { status = "error", message = "Meals can't be not ready or ready"});
             }
-
             mealOrder.OrderedQuantity = mealOrder.FinishedQuantity;
             mealOrder.MealOrderStatus = MealOrderStatus.Ready;
             _context.Entry(mealOrder).State = EntityState.Modified;
@@ -354,16 +356,10 @@ namespace API.Controllers.ControllerWork
             return Ok(new { status = "success", message = "Meals was deleted from order" });
         }
 
-
         [Route("closeCheque")]
         [HttpPost]
         public async Task<IActionResult> CloseCheque([FromBody] ChequeModel model)
         {
-            if (model.OrderId <= 0)
-            {
-                return BadRequest(new { status = "error", message = "Json model is not valid" });
-            }
-
             var order = await _context.Orders.Include(o => o.Table).FirstOrDefaultAsync(o => o.Id == model.OrderId);
             if (order == null)
             {
@@ -371,7 +367,7 @@ namespace API.Controllers.ControllerWork
             }
             if (GetUserId() != order.UserId)
             {
-                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
+                return BadRequest(new { staus = "error", message = "You can only close own orders" });
             }
             if (order.OrderStatus == OrderStatus.Active || order.OrderStatus == OrderStatus.MealCooked || order.OrderStatus == OrderStatus.BarCooked)
             {
@@ -403,7 +399,7 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public IActionResult GetWaiterStatisticsRange([FromBody] DateRange model)
         {
-            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            if (DateIsNull(model))
             {
                 return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
@@ -423,10 +419,35 @@ namespace API.Controllers.ControllerWork
             });
             return Ok(statisctics);
         }
-
         private int GetUserId()
         {
             return int.Parse(User.Claims.First(i => i.Type == "UserId").Value);
+        }
+        private bool DateIsNull(DateRange dateRange)
+        {
+            if (dateRange.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || dateRange.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            {
+                return true;
+            }
+            return false;
+        }
+        private bool TableIsNull(int id)
+        {
+            var table = _context.Tables.FirstOrDefault(t => t.Id == id);
+            if (table == null)
+            {
+                return true;
+            }
+            return false;
+        }
+        private bool MealIsNull(int id)
+        {
+            var meal = _context.Meals.FirstOrDefault(m => m.Id == id);
+            if (meal == null)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

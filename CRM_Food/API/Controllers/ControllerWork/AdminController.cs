@@ -726,7 +726,7 @@ namespace API.Controllers.ControllerWork
             return Ok(orders);
         }
 
-        [Route("bestWaiter")]
+        [Route("bestWaiterLastMonth")]
         [HttpGet]
         public IActionResult BestWaiter()
         {
@@ -735,15 +735,19 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Have no waiters" });
             }
+            DateTime start = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1, 1);
+            DateTime finish = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1, DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1));
             var top = users.Select(u => new
             {
                 id = u.Id,
                 name = u.LastName + " " +u.FirstName,
                 orderCount = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                .Where(o => o.DateTimeClosed >= start && o.DateTimeClosed <= finish)
                 .Count()
             })
             .OrderByDescending(u => u.orderCount).Take(1);
+            
             return Ok(top);
         }
 
@@ -987,7 +991,7 @@ namespace API.Controllers.ControllerWork
         public async Task<IActionResult> BookTable([FromBody] BookModel model)
         {
             //Проверка на модель, так как автоматически присваиваются данные для модели
-            if (model.BookDate <= DateTime.Parse("01.01.0001 0:00:00") && model.TableId <= 0)
+            if (BookIsNull(model))
             {
                 return BadRequest(new { status = "error", message = "Invalid Json model"});
             }
@@ -1014,7 +1018,7 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> GetWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
         {
-            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            if (DateIsNull(model))
             {
                 return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
@@ -1050,7 +1054,7 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> TotalSumDateRange([FromBody] DateRange model)
         {
-            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            if (DateIsNull(model))
             {
                 return BadRequest(new { status = "error", message = "Date model is not valid"});
             }
@@ -1065,7 +1069,7 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> TotalOrdersDateRange([FromBody] DateRange model)
         {
-            if (model.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || model.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            if (DateIsNull(model))
             {
                 return BadRequest(new { status = "error", message = "Date model is not valid" });
             }
@@ -1178,6 +1182,23 @@ namespace API.Controllers.ControllerWork
         {
             var userId = User.Claims.First(i => i.Type == "UserId").Value;
             return userId;
+        }
+
+        private bool DateIsNull(DateRange dateRange)
+        {
+            if (dateRange.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || dateRange.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            {
+                return true;
+            }
+            return false;
+        }
+        private bool BookIsNull(BookModel model)
+        {
+            if (model.BookDate <= DateTime.Parse("01.01.0001 0:00:00") && model.TableId <= 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }
