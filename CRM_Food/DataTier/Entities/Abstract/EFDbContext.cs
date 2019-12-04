@@ -14,6 +14,7 @@ namespace DataTier.Entities.Abstract
         public DbSet<Meal> Meals { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<MealOrder> MealOrders { get; set; }
+        public DbSet<Book> Books { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

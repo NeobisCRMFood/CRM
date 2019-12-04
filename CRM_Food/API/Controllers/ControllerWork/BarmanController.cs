@@ -165,7 +165,7 @@ namespace API.Controllers.ControllerWork
         [HttpPut]
         public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
         {
-            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
+            var meal = await _context.Meals.Include(m => m.Category).FirstOrDefaultAsync(m => m.Id == id);
             if (meal == null)
             {
                 return NotFound(new { status = "error", message = "Drink was not Found" });

@@ -54,7 +54,6 @@ namespace API
                 options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
             });
             services.AddDbContext<EFDbContext>();
-            services.IoCCommonDataLibraryRegister();
 
             services.AddSwaggerGen(c =>
             {

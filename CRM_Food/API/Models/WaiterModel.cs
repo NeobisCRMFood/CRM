@@ -52,4 +52,9 @@ namespace API.Models
     {
         public int OrderId { get; set; }
     }
+
+    public class GetMealModel
+    {
+        public int CategoryId { get; set; }
+    }
 }

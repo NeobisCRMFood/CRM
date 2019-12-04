@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
+using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -82,6 +83,21 @@ namespace API.Controllers.ControllerWork
             return Ok(waiters);
         }
 
+        [Route("getBooks")]
+        [HttpGet]
+        public IActionResult GetBooks()
+        {
+            var books = _context.Books.Select(b => new 
+            {
+                b.Id,
+                b.ClientName,
+                b.BookDate,
+                b.MenQuantity,
+                b.TableId,
+                b.PhoneNumber
+            });
+            return Ok(books);
+        }
         #region Статистика
         [Route("waiterStatistics/{id}")]
         [HttpGet]
@@ -121,12 +137,12 @@ namespace API.Controllers.ControllerWork
             var statiscticsWeek = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
                 orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .Count(),
 
                 totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .Select(o => o.TotalPrice)
                 .Sum()
             });
@@ -134,12 +150,12 @@ namespace API.Controllers.ControllerWork
             var statiscticsMonth = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
             {
                 orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Count(),
 
                 totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Select(o => o.TotalPrice)
                 .Sum()
             });
@@ -164,37 +180,37 @@ namespace API.Controllers.ControllerWork
 
             var totalSumDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-1))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
             var totalSumLastDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-2) && o.DateTimeClosed <= DateTime.Now.AddDays(-1))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
             var totalSumWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
             var totalSumLastWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-14) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-14) && o.DateTimeClosed <= DateTime.Now.AddDays(-7))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
             var totalSumMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
             var totalSumLastMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-2) && o.DateTimeClosed <= DateTime.Now.AddMonths(-1))
                 .Select(o => o.TotalPrice)
                 .SumAsync();
 
@@ -236,32 +252,32 @@ namespace API.Controllers.ControllerWork
 
             var totalOrdersDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-1))
                 .CountAsync();
 
             var totalOrdersLastDay = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-2) && o.DateTimeClosed <= DateTime.Now.AddDays(-1))
                 .CountAsync();
 
             var totalOrdersWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .CountAsync();
 
             var totalOrdersLastWeek = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-14) && o.DateTimeClosed <= DateTime.UtcNow.AddDays(-7))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-14) && o.DateTimeClosed <= DateTime.Now.AddDays(-7))
                 .CountAsync();
 
             var totalOrdersMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .CountAsync();
 
             var totalOrdersLastMonth = await _context.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-2) && o.DateTimeClosed <= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-2) && o.DateTimeClosed <= DateTime.Now.AddMonths(-1))
                 .CountAsync();
 
             return Ok(new 
@@ -289,21 +305,21 @@ namespace API.Controllers.ControllerWork
 
             var totalSumMonth = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.Meal.Price)
                 .SumAsync();
 
             var totalSumWeek = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.Meal.Price)
                 .SumAsync();
 
             var totalSumDay = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddDays(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.Meal.Price)
                 .SumAsync();
@@ -328,21 +344,21 @@ namespace API.Controllers.ControllerWork
 
             var totalMealsMonth = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddMonths(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.MealId)
                 .CountAsync();
 
             var totalMealsWeek = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddDays(-7))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.MealId)
                 .CountAsync();
 
             var totalMealsToday = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddDays(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Kitchen)
                 .Select(mo => mo.MealId)
                 .CountAsync();
@@ -368,21 +384,21 @@ namespace API.Controllers.ControllerWork
 
             var totalMealsMonth = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddMonths(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.MealId)
                 .CountAsync();
 
             var totalMealsWeek = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddDays(-7))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.MealId)
                 .CountAsync();
 
             var totalMealsToday = await _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Order.DateTimeOrdered >= DateTime.Now.AddDays(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.MealId)
                 .CountAsync();
@@ -408,21 +424,21 @@ namespace API.Controllers.ControllerWork
 
             var totalSumMonth = _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.Meal.Price)
                 .Sum();
 
             var totalSumWeek = _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddDays(-7))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.Meal.Price)
                 .Sum();
 
             var totalSumDay = _context.MealOrders
                 .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                .Where(mo => mo.Order.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
+                .Where(mo => mo.Order.DateTimeClosed >= DateTime.Now.AddDays(-1))
                 .Where(mo => mo.Meal.Category.Department == Department.Bar)
                 .Select(mo => mo.Meal.Price)
                 .Sum();
@@ -458,7 +474,7 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult SalesByMealWinter()
         {
-            if (DateTime.IsLeapYear(DateTime.UtcNow.Year))
+            if (DateTime.IsLeapYear(DateTime.Now.Year))
             {
                 var leapYearMeals = _context.Meals
                 .Where(m => m.Category.Department == Department.Kitchen)
@@ -468,7 +484,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 29))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 2, 29))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -487,7 +503,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 28))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 2, 28))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -510,7 +526,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 5, 31))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 5, 31))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -533,7 +549,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 9, 31))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 9, 31))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -556,7 +572,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 11, 30))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 11, 30))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -597,7 +613,7 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult SalesByMealDrinks()
         {
-            if (DateTime.IsLeapYear(DateTime.UtcNow.Year))
+            if (DateTime.IsLeapYear(DateTime.Now.Year))
             {
                 var leapYearMeals = _context.Meals
                 .Where(m => m.Category.Department == Department.Bar)
@@ -607,7 +623,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 29))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 2, 29))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -626,7 +642,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 2, 28))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.AddYears(-1).Year, 12, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 2, 28))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -649,7 +665,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 5, 31))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 3, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 5, 31))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -672,7 +688,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 9, 31))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 6, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 9, 31))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -695,7 +711,7 @@ namespace API.Controllers.ControllerWork
                     name = m.Name,
                     count = m.MealOrders
                     .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
-                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.UtcNow.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.UtcNow.Year, 11, 30))
+                    .Where(mo => mo.Order.DateTimeClosed >= new DateTime(DateTime.Now.Year, 10, 1) && mo.Order.DateTimeClosed <= new DateTime(DateTime.Now.Year, 11, 30))
                     .Select(mo => new
                     {
                         mo.OrderId
@@ -735,8 +751,8 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Have no waiters" });
             }
-            DateTime start = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1, 1);
-            DateTime finish = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1, DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month - 1));
+            DateTime start = new DateTime(DateTime.Now.Year, DateTime.Now.Month - 1, 1);
+            DateTime finish = new DateTime(DateTime.Now.Year, DateTime.Now.Month - 1, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month - 1));
             var top = users.Select(u => new
             {
                 id = u.Id,
@@ -1000,15 +1016,20 @@ namespace API.Controllers.ControllerWork
             {
                 return NotFound(new { status = "error", message = "Table was not found"});
             }
-            if (table.Status != TableStatus.Busy && table.Status != TableStatus.Booked)
+            if (table.Status == TableStatus.Busy && table.Status == TableStatus.Booked)
             {
-                table.Status = TableStatus.Booked;
-                table.BookDate = model.BookDate;
+                return BadRequest(new { status = "error", message = "Table is busy or booked yet" });
             }
-            else
+            var book = new Book()
             {
-                return BadRequest(new { status = "error", message = "Table is busy or booked"});
-            }
+                TableId = model.TableId,
+                ClientName = model.ClientName,
+                BookDate = model.BookDate,
+                MenQuantity = model.MenQuantity,
+                PhoneNumber = model.PhoneNumber
+            };
+            _context.Books.Add(book);
+            table.Status = TableStatus.Booked;
             _context.Entry(table).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Table is booked" });
@@ -1080,7 +1101,7 @@ namespace API.Controllers.ControllerWork
             return Ok(totalPrices);
         }
 
-        [HttpPut("deleteBook/{id}")]
+        [HttpDelete("deleteBook/{id}")]
         public async Task<IActionResult> DeleteBook([FromRoute] int id)
         {
             var table = _context.Tables.FirstOrDefault(t => t.Id == id);
@@ -1092,8 +1113,9 @@ namespace API.Controllers.ControllerWork
             {
                 return BadRequest(new { status = "error", message = "Table is free or busy" });
             }
+            var book = _context.Books.FirstOrDefault(b => b.Id == id);
+            _context.Books.Remove(book);
             table.Status = TableStatus.Free;
-            table.BookDate = null;
             _context.Entry(table).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Book is deleted" });
@@ -1176,12 +1198,6 @@ namespace API.Controllers.ControllerWork
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Meals was deleted from order" });
-        }
-
-        private string GetUserId()
-        {
-            var userId = User.Claims.First(i => i.Type == "UserId").Value;
-            return userId;
         }
 
         private bool DateIsNull(DateRange dateRange)

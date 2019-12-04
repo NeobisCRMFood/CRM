@@ -101,14 +101,15 @@ namespace API.Controllers.ControllerWork
             return Ok(tables);
         }
 
-        [Route("getMenu")]
+        [Route("getKitchenMenu")]
         [HttpGet]
-        public IActionResult Get_menu()
+        public IActionResult GetKitchen()
         {
-            var menu = _context.Categories
+            var menu = _context.Categories.Where(c => c.Department == Department.Kitchen)
                 .Select(c => new
                 {
                     category = c.Name,
+                    image = c.ImageURL,
                     departmentId = c.Department,
                     departmentName = c.Department.ToString(),
                     meals = c.Meals.Select(m => new
@@ -118,7 +119,29 @@ namespace API.Controllers.ControllerWork
                         mealWeight = m.Weight,
                         mealStatus = m.MealStatus,
                         price = m.Price,
-                        image = m.ImageURL
+                    })
+                });
+            return Ok(menu);
+        }
+
+        [Route("getBarMenu")]
+        [HttpGet]
+        public IActionResult GetBar()
+        {
+            var menu = _context.Categories.Where(c => c.Department == Department.Bar)
+                .Select(c => new
+                {
+                    category = c.Name,
+                    image = c.ImageURL,
+                    departmentId = c.Department,
+                    departmentName = c.Department.ToString(),
+                    meals = c.Meals.Select(m => new
+                    {
+                        mealId = m.Id,
+                        mealName = m.Name,
+                        mealWeight = m.Weight,
+                        mealStatus = m.MealStatus,
+                        price = m.Price,
                     })
                 });
             return Ok(menu);
@@ -158,12 +181,12 @@ namespace API.Controllers.ControllerWork
                 .Select(u => new
                 {
                     orderCount = u.Orders
-                    .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                    .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                     .Count(),
 
                     totalSum = u.Orders
                     .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                    .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
+                    .Where(o => o.DateTimeClosed >= DateTime.Now.AddDays(-7))
                     .Select(o => o.TotalPrice).Sum()
                 });
 
@@ -172,18 +195,36 @@ namespace API.Controllers.ControllerWork
                 .Select(u => new
                 {
                     orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Count(),
 
                     totalSum = u.Orders
                 .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
+                .Where(o => o.DateTimeClosed >= DateTime.Now.AddMonths(-1))
                 .Select(o => o.TotalPrice).Sum()
                 });
 
             return Ok(new { statisctics, statiscticsMonth, statiscticsWeek, statiscticsToday});
         }
-        
+
+        [Route("getMeals")]
+        [HttpPost]
+        public IActionResult GetMeals([FromBody] GetMealModel model)
+        {
+            var meals = _context.Meals
+                .Where(m => m.CategoryId == model.CategoryId)
+                .Select(m => new 
+            {
+                m.Id,
+                m.Name,
+                m.Weight,
+                m.Price,
+                m.Description,
+                m.MealStatus
+            });
+            return Ok(meals);
+        }
+
         [Route("createOrder")]
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderModel model)
@@ -200,7 +241,7 @@ namespace API.Controllers.ControllerWork
             {
                 UserId = GetUserId(),
                 TableId = model.TableId,
-                DateTimeOrdered = DateTime.UtcNow,
+                DateTimeOrdered = DateTime.Now,
                 Comment = model.Comment,
                 MealOrders = model.MealOrders
             };
@@ -210,7 +251,7 @@ namespace API.Controllers.ControllerWork
             }
             using (var transaction = _context.Database.BeginTransaction())
             {
-                order.DateTimeOrdered = DateTime.UtcNow;
+                order.DateTimeOrdered = DateTime.Now;
                 order.OrderStatus = OrderStatus.Active;
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
@@ -268,7 +309,7 @@ namespace API.Controllers.ControllerWork
                     mealOrder.MealOrderStatus = MealOrderStatus.NotReady;
                 }
             }
-            order.DateTimeOrdered = DateTime.UtcNow;
+            order.DateTimeOrdered = DateTime.Now;
             order.OrderStatus = OrderStatus.Active;
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -385,7 +426,7 @@ namespace API.Controllers.ControllerWork
                     sum += itemTotalPrice;
                 }
                 order.TotalPrice = sum;
-                order.DateTimeClosed = DateTime.UtcNow;
+                order.DateTimeClosed = DateTime.Now;
                 order.Table.Status = TableStatus.Free;
                 order.OrderStatus = OrderStatus.NotActive;
                 _context.Entry(order).State = EntityState.Modified;

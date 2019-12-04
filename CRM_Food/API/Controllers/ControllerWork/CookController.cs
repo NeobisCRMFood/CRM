@@ -115,6 +115,7 @@ namespace API.Controllers.ControllerWork
             var mealOrder = _context.MealOrders
                 .Include(mo => mo.Order)
                 .Include(mo => mo.Meal)
+                .Include(mo => mo.Meal.Category)
                 .FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
             if (mealOrder == null)
             {
@@ -164,12 +165,12 @@ namespace API.Controllers.ControllerWork
         [HttpPut]
         public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
         {
-            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
+            var meal = await _context.Meals.Include(m => m.Category).FirstOrDefaultAsync(m => m.Id == id);
             if (meal == null)
             {
-                return NotFound(new { status = "error", message = "Drink was not Found" });
+                return NotFound(new { status = "error", message = "Meal was not Found" });
             }
-            if (meal.Category.Department != Department.Bar)
+            if (meal.Category.Department != Department.Kitchen)
             {
                 return BadRequest(new { status = "error", message = "Cook can't change Bar meal status" });
             }
@@ -179,10 +180,10 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
 
                 //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
-                //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(User.Claims.FirstOrDefault(us => us.Type == "UserId").Value));
-                //if (user.Role == Role.admin || user.Role == Role.cook)
+                //var users = _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.cook);
+                //foreach (var item in users)
                 //{
-                //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                //    await _hubContext.Clients.User(item.Id.ToString()).SendAsync($"Notify", message);
                 //}
                 return Ok(meal);
             }
@@ -192,17 +193,13 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
 
                 //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
-                //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
-                //if (user.Role == Role.admin || user.Role == Role.cook)
+                //var users = _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.cook);
+                //foreach (var item in users)
                 //{
-                //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
+                //    await _hubContext.Clients.User(item.Id.ToString()).SendAsync($"Notify", message);
                 //}
                 return Ok(meal);
             }
-        }
-        private int GetUserId()
-        {
-            return int.Parse(User.Claims.First(i => i.Type == "UserId").Value);
         }
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
@@ -23,7 +24,7 @@ namespace API.Controllers
             _context = context;
         }
 
-        // GET: api/Categories
+        //[Authorize(Roles = "cook")]
         [HttpGet]
         public IQueryable GetCategories()
         {
