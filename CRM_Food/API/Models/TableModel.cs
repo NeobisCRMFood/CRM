@@ -8,7 +8,7 @@ namespace API.Models
 {
     public class TableModel
     {
-        [Required(ErrorMessage = "Заполните имя")]
+        [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
     }
 }

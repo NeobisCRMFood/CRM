@@ -40,7 +40,9 @@ namespace DataTier.Entities.Concrete
         
         public string Comment { get; set; }
         public string ImageURL { get; set; }
-        
+
+        public EmployeeStatus Status { get; set; }
+
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; }
         public User()

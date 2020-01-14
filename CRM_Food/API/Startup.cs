@@ -1,4 +1,5 @@
 ﻿using API.Hubs;
+using API.Services;
 using DataTier.Entities.Abstract;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace API
@@ -54,6 +58,19 @@ namespace API
                 options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
             });
             services.AddDbContext<EFDbContext>();
+            services.AddSingleton<IJobFactory, BookFactory>();
+            services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            services.AddSingleton<BookDeleter>();
+            services.AddSingleton(new JobSchedule(
+                jobType: typeof(BookDeleter),
+                cronExpression: "0/5 * * * * ?")); // run every 5 seconds));
+            services.AddSingleton<TableBooker>();
+            services.AddSingleton(new JobSchedule(
+                jobType: typeof(TableBooker),
+                cronExpression: "0/5 * * * * ?")); // run every 5 seconds));
+            services.AddHostedService<BookService>();
+
+
 
             services.AddSwaggerGen(c =>
             {
@@ -74,6 +91,8 @@ namespace API
             {
                 app.UseHsts();
             }
+
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
             app.UseSignalR(routes =>

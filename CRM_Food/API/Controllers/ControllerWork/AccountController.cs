@@ -36,15 +36,25 @@ namespace API.Controllers.ControllerWork
                 var error = new
                 {
                     status = 400,
-                    message = "Invalid username or password"
+                    message = "Неправильный логин или пароль"
                 };
                 Response.ContentType = "application/json";
                 await Response.WriteAsync(JsonConvert.SerializeObject(error, new JsonSerializerSettings { Formatting = Formatting.Indented }));
                 return;
             }
-
+            var dismissUser = _context.Users.FirstOrDefault(u => u.Login == authUser.Login && u.Password == authUser.Password);
+            if (dismissUser.Status == EmployeeStatus.NotActive)
+            {
+                var dismissError = new
+                {
+                    status = 400,
+                    message = "Сотрудник уволен"
+                };
+                Response.ContentType = "application/json";
+                await Response.WriteAsync(JsonConvert.SerializeObject(dismissError, new JsonSerializerSettings { Formatting = Formatting.Indented }));
+                return;
+            }
             var now = DateTime.UtcNow;
-
             var jwt = new JwtSecurityToken(
                 issuer: AuthOptions.ISSUER,
                 audience: AuthOptions.AUDIENCE,
@@ -54,11 +64,14 @@ namespace API.Controllers.ControllerWork
                 signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
+            var user = _context.Users.FirstOrDefault(u => u.Id == int.Parse(identity.Claims.First(i => i.Type == "UserId").Value));
+
             var response = new
             {
                 access_token = encodedJwt,
-                username = identity.Name
-            };
+                username = identity.Name,
+                role = user.Role
+        };
 
             Response.ContentType = "application/json";
             await Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));

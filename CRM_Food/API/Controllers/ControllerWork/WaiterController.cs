@@ -108,6 +108,7 @@ namespace API.Controllers.ControllerWork
             var menu = _context.Categories.Where(c => c.Department == Department.Kitchen)
                 .Select(c => new
                 {
+                    catetegoryId = c.Id,
                     category = c.Name,
                     image = c.ImageURL,
                     departmentId = c.Department,
@@ -131,6 +132,7 @@ namespace API.Controllers.ControllerWork
             var menu = _context.Categories.Where(c => c.Department == Department.Bar)
                 .Select(c => new
                 {
+                    categoryId = c.Id,
                     category = c.Name,
                     image = c.ImageURL,
                     departmentId = c.Department,
@@ -163,7 +165,7 @@ namespace API.Controllers.ControllerWork
             });
 
             var statiscticsToday = _context.Users
-                //.Where(u => u.Id == GetUserId())
+                .Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders
@@ -177,7 +179,7 @@ namespace API.Controllers.ControllerWork
                 });
 
             var statiscticsWeek = _context.Users
-                //.Where(u => u.Id == GetUserId())
+                .Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders
@@ -191,7 +193,7 @@ namespace API.Controllers.ControllerWork
                 });
 
             var statiscticsMonth = _context.Users
-                //.Where(u => u.Id == GetUserId())
+                .Where(u => u.Id == GetUserId())
                 .Select(u => new
                 {
                     orderCount = u.Orders

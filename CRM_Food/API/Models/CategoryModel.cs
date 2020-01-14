@@ -13,6 +13,7 @@ namespace API.Models
         [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
         public Department Department { get; set; }
+        [Required(ErrorMessage = "Укажите ссылку на картинку")]
         public string ImageURL { get; set; }
     }
 }

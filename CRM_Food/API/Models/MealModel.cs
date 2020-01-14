@@ -9,7 +9,6 @@ namespace API.Models
 {
     public class MealModel
     {
-        [Required(ErrorMessage = "Укажите Id категории")]
         public int CategoryId { get; set; }
         [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
@@ -17,7 +16,9 @@ namespace API.Models
         public string Description { get; set; }
         [Required(ErrorMessage = "Укажите цену")]
         public decimal Price { get; set; }
+        [Required(ErrorMessage = "Укажите вес или количество")]
         public string Weight { get; set; }
+        [Required(ErrorMessage = "Укажите ссылку на картинку")]
         public string ImageURL { get; set; }
     }
 }

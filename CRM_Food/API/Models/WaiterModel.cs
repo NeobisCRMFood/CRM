@@ -9,7 +9,6 @@ namespace API.Models
 {
     public class CreateOrderModel
     {
-        [Required(ErrorMessage = "Укажите Id стола")]
         public int TableId { get; set; }
         public string Comment { get; set; }
         public ICollection<MealOrder> MealOrders { get; set; }

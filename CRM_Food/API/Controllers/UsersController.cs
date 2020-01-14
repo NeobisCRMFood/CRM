@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    //[Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -27,14 +28,14 @@ namespace API.Controllers
         [HttpGet]
         public IActionResult GetUsers()
         {
-            var users = _context.Users.Select(u => new
+            var users = _context.Users.Where(u => u.Status == EmployeeStatus.Active).Select(u => new
             {
                 id = u.Id,
                 firstName = u.FirstName,
                 lastName = u.LastName,
                 middleName = u.MiddleName,
                 gender = u.Gender,
-                dateBorn = u.DateBorn,
+                dateBorn = u.DateBorn.ToShortDateString(),
                 phoneNumber = u.PhoneNumber,
                 login = u.Login,
                 password = u.Password,
@@ -50,14 +51,30 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser([FromRoute] int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
             {
                 return NotFound(new { status = "error", message = "User was not found" });
             }
-
-            return Ok(user);
+            
+            return Ok(new 
+            { 
+                user.Id, 
+                user.FirstName, 
+                user.LastName, 
+                user.MiddleName, 
+                user.Gender, 
+                dateBorn = user.DateBorn.ToShortDateString(),
+                user.PhoneNumber, 
+                user.Login,
+                user.Password,
+                user.Email,
+                startWorkDay = user.StartWorkDay.ToShortDateString(),
+                user.Role,
+                user.Comment,
+                user.ImageURL
+            });
         }
 
         // PUT: api/Users/5
@@ -73,7 +90,11 @@ namespace API.Controllers
             {
                 return BadRequest(new { status = "error", message = "User id is not equal to id from route" });
             }
-
+            var loginExist = _context.Users.FirstOrDefault(u => u.Login == user.Login && u.Id != user.Id);
+            if (loginExist != null)
+            {
+                return BadRequest(new { status = "error", message = "Пользователь с таким логином уже существует" });
+            }
             _context.Entry(user).State = EntityState.Modified;
 
             try
@@ -113,12 +134,13 @@ namespace API.Controllers
                 DateBorn = model.DateBorn,
                 StartWorkDay = model.StartWorkDay,
                 Comment = model.Comment,
+                Status = EmployeeStatus.Active,
                 ImageURL = model.ImageURL
             };
             var userExist = _context.Users.FirstOrDefault(u => u.Login == user.Login);
             if (userExist != null)
             {
-                return BadRequest(new { status = "error", message = "User exists" });
+                return BadRequest(new { status = "error", message = "Пользователь с таким логином уже существует" });
             }
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -127,21 +149,22 @@ namespace API.Controllers
         }
 
         // DELETE: api/Users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser([FromRoute] int id)
+        [Route("DismissUser/{id}")]
+        [HttpPut]
+        public async Task<IActionResult> DismissUser([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
                 return NotFound(new { status = "error", message = "User was not found" });
             }
 
-            _context.Users.Remove(user);
+            user.Status = EmployeeStatus.NotActive;
             await _context.SaveChangesAsync();
 
             return Ok(user);

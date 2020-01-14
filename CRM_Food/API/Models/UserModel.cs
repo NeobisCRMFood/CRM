@@ -31,10 +31,11 @@ namespace API.Models
         [Required(ErrorMessage = "Заполните пароль")]
         public string Password { get; set; }
 
+        [Required(ErrorMessage = "Укажите email")]
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; }
         public DateTime StartWorkDay { get; set; }
-
+        [Required(ErrorMessage = "Укажите роль")]
         public Role Role { get; set; }
 
         public string Comment { get; set; }

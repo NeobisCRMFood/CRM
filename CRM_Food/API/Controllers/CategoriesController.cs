@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    //[Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
@@ -24,7 +24,7 @@ namespace API.Controllers
             _context = context;
         }
 
-        //[Authorize(Roles = "cook")]
+        [Authorize(Roles = "cook, admin")]
         [HttpGet]
         public IQueryable GetCategories()
         {
@@ -67,6 +67,12 @@ namespace API.Controllers
                 return BadRequest(new { status = "error", message = "Category id is not equal to id from route" });
             }
 
+            var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name && c.Id != category.Id);
+            if (categoryExist != null)
+            {
+                return BadRequest(new { status = "error", message = "Категория с таким названием уже существует" });
+            }
+
             _context.Entry(category).State = EntityState.Modified;
 
             try
@@ -101,7 +107,7 @@ namespace API.Controllers
             var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name);
             if (categoryExist != null)
             {
-                return BadRequest(new { status = "error", message = "Category exists"});
+                return BadRequest(new { status = "error", message = "Категория с таким названием уже существует"});
             }
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();

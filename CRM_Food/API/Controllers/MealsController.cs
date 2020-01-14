@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    //[Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class MealsController : ControllerBase
@@ -69,6 +70,12 @@ namespace API.Controllers
                 return BadRequest(new { status = "error", message = "Meal id is not equal to id from route" });
             }
 
+            var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight && m.Id != meal.Id);
+            if (mealExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Блюдо с таким названием и описанем уже существует" });
+            }
+
             _context.Entry(meal).State = EntityState.Modified;
 
             try
@@ -106,7 +113,7 @@ namespace API.Controllers
             var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight);
             if (mealExists != null)
             {
-                return BadRequest(new { status = "error", message = "Meal exists" });
+                return BadRequest(new { status = "error", message = "Блюдо с таким названием и описанем уже существует" });
             }
             _context.Meals.Add(meal);
             await _context.SaveChangesAsync();

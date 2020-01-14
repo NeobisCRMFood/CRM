@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    //[Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class TablesController : ControllerBase
@@ -69,6 +70,12 @@ namespace API.Controllers
                 return BadRequest(new { status = "error", message = "Table id is not equal to id from route" });
             }
 
+            var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name && t.Id != table.Id);
+            if (tableExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Стол с таким названием уже существует" });
+            }
+
             _context.Entry(table).State = EntityState.Modified;
 
             try
@@ -101,7 +108,7 @@ namespace API.Controllers
             var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name);
             if (tableExists != null)
             {
-                return BadRequest(new { status = "error", message = "Table exists" });
+                return BadRequest(new { status = "error", message = "Стол с таким названием уже существует" });
             }
             _context.Tables.Add(table);
             await _context.SaveChangesAsync();
