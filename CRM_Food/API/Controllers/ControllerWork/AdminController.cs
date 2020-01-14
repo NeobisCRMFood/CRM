@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace API.Controllers.ControllerWork
 {
@@ -27,24 +28,73 @@ namespace API.Controllers.ControllerWork
             _context = context;
             _hubContext = hubContext;
         }
+        //[Route("getMeals")]
+        //[HttpGet]
+        //public IActionResult GetMeals()
+        //{
+        //var meals = _context.Meals.Select(m => new
+        //{
+        //    id = m.Id,
+        //    name = m.Name,
+        //    description = m.Description,
+        //    deprtmentId = m.Category.Department,
+        //    categoryId = m.CategoryId,
+        //    category = m.Category.Name,
+        //    price = m.Price,
+        //    weight = m.Weight,
+        //    status = m.MealStatus.ToString(),
+        //    image = m.ImageURL
+        //});
+        //    return Ok(meals);
+        //}
+
         [Route("getMeals")]
         [HttpGet]
-        public IActionResult GetMeals()
+        public IEnumerable<> GetMeals([FromQuery] PaginationModel model)
         {
-            var meals = _context.Meals.Select(m => new
+            var source = (from meal in _context.Meals select meal).AsQueryable().Select(m => new
+             {
+                 id = m.Id,
+                 name = m.Name,
+                 description = m.Description,
+                 deprtmentId = m.Category.Department,
+                 categoryId = m.CategoryId,
+                 category = m.Category.Name,
+                 price = m.Price,
+                 weight = m.Weight,
+                 status = m.MealStatus.ToString(),
+                 image = m.ImageURL
+             });
+
+            int count = source.Count();
+
+            int CurrentPage = model.PageNumber;
+
+            int PageSize = model.PageSize;
+
+            int TotalCount = count;
+
+            int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
+
+            var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+
+            var previousPage = CurrentPage > 1 ? "Yes" : "No";
+
+            var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
+
+            var paginationMetadata = new
             {
-                id = m.Id,
-                name = m.Name,
-                description = m.Description,
-                deprtmentId = m.Category.Department,
-                categoryId = m.CategoryId,
-                category = m.Category.Name,
-                price = m.Price,
-                weight = m.Weight,
-                status = m.MealStatus.ToString(),
-                image = m.ImageURL
-            });
-            return Ok(meals);
+                totalCount = TotalCount,
+                pageSize = PageSize,
+                currentPage = CurrentPage,
+                totalPages = TotalPages,
+                previousPage,
+                nextPage
+            };
+
+            HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+
+            return items;
         }
 
         [Route("getWaiters")]
