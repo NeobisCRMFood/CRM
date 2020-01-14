@@ -2,99 +2,49 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Hubs;
 using API.Models;
+using API.Week;
 using DataTier.Entities.Abstract;
+using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
     {
         private readonly EFDbContext _context;
-        public AdminController(EFDbContext context)
+        private readonly IHubContext<FoodHub> _hubContext;
+        public AdminController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
-        [Route("BookTable")]
-        [HttpPost]
-        public async Task<IActionResult> BookTable([FromBody] BookModel model)
+        [Route("getMeals")]
+        [HttpGet]
+        public IActionResult GetMeals()
         {
-            if (!ModelState.IsValid)
+            var meals = _context.Meals.Select(m => new
             {
-                return BadRequest(ModelState);
-            }
-            var table = _context.Tables.FirstOrDefault(t => t.Id == model.TableId);
-            if (table == null)
-            {
-                return BadRequest();
-            }
-            if (table.Status != TableStatus.Busy && table.Status != TableStatus.Booked)
-            {
-                table.Status = TableStatus.Booked;
-                table.BookDate = model.BookDate;
-            }
-            _context.Entry(table).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [Route("TotalSumDateRange")]
-        [HttpPost]
-        public async Task<IActionResult> TotalSumDateRange([FromBody] DateRange model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var totalPrices =  _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= model.StartDate && o.DateTimeClosed <= model.EndDate)
-                .Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalOrdersDateRange")]
-        [HttpPost]
-        public async Task<IActionResult> TotalOrdersDateRange([FromBody] DateRange model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var totalPrices = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= model.StartDate && o.DateTimeClosed <= model.EndDate)
-                .CountAsync();
-            return Ok(totalPrices);
-        }
-
-        [HttpPut("DeleteBook/{id}")]
-        public async Task<IActionResult> DeleteBook([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var table = _context.Tables.FirstOrDefault(t => t.Id == id);
-            if (table == null)
-            {
-                return BadRequest();
-            }
-            if (table.Status != TableStatus.Busy && table.Status != TableStatus.Booked)
-            {
-                table.Status = TableStatus.Free;
-                table.BookDate = null;
-            }
-            _context.Entry(table).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
+                id = m.Id,
+                name = m.Name,
+                description = m.Description,
+                deprtmentId = m.Category.Department,
+                categoryId = m.CategoryId,
+                category = m.Category.Name,
+                price = m.Price,
+                weight = m.Weight,
+                status = m.MealStatus.ToString(),
+                image = m.ImageURL
+            });
+            return Ok(meals);
         }
 
         [Route("getWaiters")]
@@ -103,6 +53,7 @@ namespace API.Controllers.ControllerWork
         {
             var waiters = _context.Users.Where(u => u.Role == Role.waiter).Select(u => new
             {
+                id = u.Id,
                 name = u.LastName + " " + u.FirstName + " " + u.MiddleName,
                 login = u.Login,
                 password = u.Password
@@ -110,324 +61,183 @@ namespace API.Controllers.ControllerWork
             return Ok(waiters);
         }
 
-        [Route("getWaiterStatistics/{id}")]
+        [Route("getDismissed")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatistics([FromRoute] int id)
+        public IActionResult GetDismissedWaiters()
         {
-            if (!ModelState.IsValid)
+            var waiters = _context.Users.Where(u => u.Role == Role.waiter).Where(u => u.Status == EmployeeStatus.NotActive).Select(u => new
             {
-                return BadRequest(ModelState);
-            }
-            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (waiter.Role != Role.waiter)
-            {
-                return NotFound();
-            }
-            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
-            {
-                orderCount = u.Orders
-                .Count(),
-
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Select(o => o.TotalPrice)
-                .Sum()
+                id = u.Id,
+                name = u.LastName + " " + u.FirstName + " " + u.MiddleName,
+                login = u.Login,
+                password = u.Password
             });
-            return Ok(statisctics);
+            return Ok(waiters);
         }
 
-        [Route("getWaiterStatisticsToday/{id}")]
+        [Route("getBooks")]
         [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsToday([FromRoute] int id)
+        public IActionResult GetBooks()
         {
-            if (!ModelState.IsValid)
+            var books = _context.Books.Where(b => b.Table.Status == TableStatus.Booked).Select(b => new 
             {
-                return BadRequest(ModelState);
-            }
-            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (waiter.Role != Role.waiter)
-            {
-                return NotFound();
-            }
-            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
-            {
-                orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.Today)
-                .Count(),
-
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.Today)
-                .Select(o => o.TotalPrice)
-                .Sum()
+                b.Id,
+                b.ClientName,
+                bookDate = b.BookDate,
+                b.MenQuantity,
+                b.TableId,
+                b.PhoneNumber
             });
-            return Ok(statisctics);
+            return Ok(books);
         }
 
-        [Route("getWaiterStatisticsWeek/{id}")]
-        [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsWeek([FromRoute] int id)
+        [Route("bookTable")]
+        [HttpPost]
+        public async Task<IActionResult> BookTable([FromBody] BookModel model)
         {
-            if (!ModelState.IsValid)
+            if (BookIsNull(model))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Invalid Json model"});
             }
-            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (waiter.Role != Role.waiter)
+            var table = _context.Tables.FirstOrDefault(t => t.Id == model.TableId);
+            if (table == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Стол не был найден"});
             }
-            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            var bookExists = _context.Books.FirstOrDefault(b => b.BookDate.AddMinutes(-30) <= model.BookDate && b.BookDate.AddMinutes(30) >= model.BookDate && b.TableId == model.TableId);
+            if (bookExists != null)
             {
-                orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .Count(),
-
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .Select(o => o.TotalPrice)
-                .Sum()
-            });
-            return Ok(statisctics);
-        }
-
-        [Route("getWaiterStatisticsWeek/{id}")]
-        [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsMonth([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
+                return BadRequest(new { status = "error", message = "Уже существует бронь, примерно, на это время" });
             }
-            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (waiter.Role != Role.waiter)
+            if (model.BookDate <= DateTime.Now)
             {
-                return NotFound();
+                return BadRequest(new { status = "error", message = "Невозможно забронировать на прошлое время" });
             }
-            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            var book = new Book()
             {
-                orderCount = u.Orders
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
-                .Count(),
-
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
-                .Select(o => o.TotalPrice)
-                .Sum()
-            });
-            return Ok(statisctics);
+                TableId = model.TableId,
+                ClientName = model.ClientName,
+                BookDate = model.BookDate,
+                MenQuantity = model.MenQuantity,
+                PhoneNumber = model.PhoneNumber
+            };
+            _context.Books.Add(book);
+            _context.Entry(table).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok(new { status = "success", message = "Бронь была добавлена!" });
         }
 
-        [Route("getWaiterStatisticsRange/{id}")]
-        [HttpGet]
-        public async Task<IActionResult> getWaiterStatisticsRange([FromRoute] int id, [FromBody] DateRange model)
+        [HttpDelete("deleteBook/{id}")]
+        public async Task<IActionResult> DeleteBook([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            var book = _context.Books.Include(b => b.Table).FirstOrDefault(b => b.Id == id);
+            if (book == null)
             {
-                return BadRequest(ModelState);
+                return NotFound(new { status = "error", message = "Бронь не была найдена" });
             }
-            var waiter = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (waiter.Role != Role.waiter)
+            if (book.Table.Status == TableStatus.Booked && book.BookDate <= DateTime.Now.AddMinutes(30))
             {
-                return NotFound();
+                book.Table.Status = TableStatus.Free;
             }
-            var statisctics = _context.Users.Where(u => u.Id == waiter.Id).Select(u => new
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+            return Ok(new { status = "success", message = "Book is deleted" });
+        }
+
+        [Route("changeMealStatus/{id}")]
+        [HttpPut]
+        public async Task<IActionResult> ChangeMealStatus([FromRoute] int id)
+        {
+            var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == id);
+            if (meal != null)
             {
-                orderCount = u.Orders
-                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= o.DateTimeClosed)
-                .Count(),
-
-                totalSum = u.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeClosed <= model.EndDate)
-                .Select(o => o.TotalPrice)
-                .Sum()
-            });
-            return Ok(statisctics);
-        }
-
-        [Route("TotalSum")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSum()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalSumMonth")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSumMonth()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1)).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalSumWeek")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSumWeek()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7)).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalSumToday")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSumToday()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Where(o => o.DateTimeClosed >= DateTime.Today).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalSumDay")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSumDay()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-1)).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            return Ok(sum);
-        }
-
-        [Route("TotalSumAverage")]
-        [HttpGet]
-        public async Task<IActionResult> TotalSumAverage()
-        {
-            var totalPrices = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Select(o => o.TotalPrice);
-            var sum = await totalPrices.SumAsync();
-            var count = await _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).CountAsync();
-            var totalSum = sum / count;
-            return Ok(totalSum);
-        }
-        [Route("TotalOrders")]
-        [HttpGet]
-        public async Task<IActionResult> TotalOrders()
-        {
-            var orders = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .CountAsync();
-            return Ok(orders);
-        }
-
-        [Route("TotalOrdersMonth")]
-        [HttpGet]
-        public async Task<IActionResult> TotalOrdersForMonth()
-        {
-            var orders = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddMonths(-1))
-                .CountAsync();
-            return Ok(orders);
-        }
-
-        [Route("TotalOrdersWeek")]
-        [HttpGet]
-        public async Task<IActionResult> TotalOrdersWeek()
-        {
-            var orders = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-7))
-                .CountAsync();
-            return Ok(orders);
-        }
-
-        [Route("TotalOrdersToday")]
-        [HttpGet]
-        public async Task<IActionResult> TotalOrdersToday()
-        {
-            var orders = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.UtcNow.AddDays(-1))
-                .CountAsync();
-            return Ok(orders);
-        }
-
-        [Route("TotalOrdersDay")]
-        [HttpGet]
-        public async Task<IActionResult> TotalOrdersDay()
-        {
-            var orders = await _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.NotActive)
-                .Where(o => o.DateTimeClosed >= DateTime.Today)
-                .CountAsync();
-            return Ok(orders);
-        }
-
-        [Route("TopMeals")]
-        [HttpGet]
-        public IActionResult SalesByMeal()
-        {
-            var meals = _context.Meals
-                .Where(m => m.Category.DepartmentId == 1)
-                .Include(m => m.MealOrders)
-                .Select(m => new
+                if (meal.MealStatus == MealStatus.Have)
                 {
-                name = m.Name,
-                count = m.MealOrders.Select(mo => new
+                    meal.MealStatus = MealStatus.HaveNot;
+                    await _context.SaveChangesAsync();
+                    return Ok(meal);
+                }
+                else if (meal.MealStatus == MealStatus.HaveNot)
                 {
-                    count = mo.OrderId
-                })
-                .Count()
-            })
-            .OrderByDescending(mo => mo.count);
-            return Ok(meals);
-        }
-
-        [Route("TopDrinks")]
-        [HttpGet]
-        public IActionResult SalesByDrink()
-        {
-            var meals = _context.Meals
-                .Where(m => m.Category.DepartmentId == 2)
-                .Include(m => m.MealOrders)
-                .Select(m => new
-                {
-                name = m.Name,
-                count = m.MealOrders
-                .Select(mo => new
-                {
-                    count = mo.OrderId
-                })
-                .Count()
-            })
-            .OrderByDescending(mo => mo.count);
-            return Ok(meals);
-        }
-
-        [Route("LatestOrders")]
-        [HttpGet]
-        public IActionResult LatestOrders()
-        {
-            var orders = _context.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).OrderByDescending(o => o.DateTimeOrdered).Select(o => new
-            {
-                orderId = o.Id,
-                time = o.DateTimeClosed,
-                meals = o.MealOrders.Count(),
-                totalPrice = o.TotalPrice
-            });
-            return Ok(orders);
-        }
-
-        [Route("WaiterTop")]
-        [HttpGet]
-        public IActionResult WaiterTop()
-        {
-            var users = _context.Users.Where(u => u.Role == Role.waiter);
-            if (users == null)
-            {
-                return BadRequest();
+                    meal.MealStatus = MealStatus.Have;
+                    await _context.SaveChangesAsync();
+                    return Ok(meal);
+                }
             }
-            var top = users.Select(u => new
-            {
-                name = u.LastName + u.FirstName,
-                orderCount = u.Orders.Where(o => o.OrderStatus == OrderStatus.NotActive).Count()
-            }).OrderByDescending(u => u.orderCount);
+            return NotFound(new { status = "error", message = "Блюдо или напиток не был найден"});
+        }
 
-            return Ok(top);
+        [Route("deleteMealsOrder")]
+        [HttpPost]
+        public async Task<IActionResult> DeleteMealFromOrder([FromBody] DeleteMealOrderModel model)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == model.OrderId);
+            if (order == null)
+            {
+                return NotFound(new { status = "error", message = "Заказ не был найден" });
+            }
+            foreach (var item in model.MealOrders)
+            {
+                var meal = await _context.Meals.FirstOrDefaultAsync(m => m.Id == item.MealId);
+                if (meal == null)
+                {
+                    return NotFound(new { status = "error", message = "Блюдо не было найдено в базе данных" });
+                }
+
+                var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == order.Id && mo.MealId == item.MealId);
+
+                if (mealOrder == null)
+                {
+                    return NotFound(new { status = "error", message = $"Блюда с Id:{item.MealId} нет в заказе:{order.Id}" });
+                }
+                if (mealOrder.MealOrderStatus == MealOrderStatus.Ready)
+                {
+                    if (mealOrder.OrderedQuantity == item.DeleteQuantity)
+                    {
+                        _context.MealOrders.Remove(mealOrder);
+                    }
+                    else if (mealOrder.OrderedQuantity > item.DeleteQuantity)
+                    {
+                        mealOrder.OrderedQuantity -= item.DeleteQuantity;
+                    }
+                    else if (mealOrder.OrderedQuantity < item.DeleteQuantity)
+                    {
+                        return BadRequest(new { status = "error", message = "Количество удаляемых порций не может быть больше количества заказанных" });
+                    }
+                    if (mealOrder.OrderedQuantity <= mealOrder.FinishedQuantity)
+                    {
+                        mealOrder.MealOrderStatus = MealOrderStatus.Ready;
+                    }
+                    else
+                    {
+                        mealOrder.MealOrderStatus = MealOrderStatus.NotReady;
+                    }
+                }
+                else
+                {
+                    return BadRequest(new { status = "error", message = "This method can't delete meal from not ready or freezed MealOrder" });
+                }
+            }
+            _context.Entry(order).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok(new { status = "success", message = "Блюда были успешно удалены" });
+        }
+
+        private bool DateIsNull(DateRange dateRange)
+        {
+            if (dateRange.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || dateRange.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
+            {
+                return true;
+            }
+            return false;
+        }
+        private bool BookIsNull(BookModel model)
+        {
+            if (model.BookDate <= DateTime.Parse("01.01.0001 0:00:00") && model.TableId <= 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

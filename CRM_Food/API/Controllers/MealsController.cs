@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class MealsController : ControllerBase
@@ -23,7 +26,7 @@ namespace API.Controllers
 
         // GET: api/Meals
         [HttpGet]
-        public IQueryable GetMeals()
+        public IActionResult GetMeals()
         {
             var meals = _context.Meals.Select(m => new
             {
@@ -36,23 +39,18 @@ namespace API.Controllers
                 weight = m.Weight,
                 imageURL = m.ImageURL
             });
-            return meals;
+            return Ok(meals);
         }
 
         // GET: api/Meals/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMeal([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var meal = await _context.Meals.FindAsync(id);
 
             if (meal == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Meal was not found"});
             }
 
             return Ok(meal);
@@ -69,7 +67,13 @@ namespace API.Controllers
 
             if (id != meal.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Meal id is not equal to id from route" });
+            }
+
+            var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight && m.Id != meal.Id);
+            if (mealExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Блюдо с таким названием и описанем уже существует" });
             }
 
             _context.Entry(meal).State = EntityState.Modified;
@@ -82,7 +86,7 @@ namespace API.Controllers
             {
                 if (!MealExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Meal was not found" });
                 }
                 else
                 {
@@ -90,18 +94,27 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Meals
         [HttpPost]
-        public async Task<IActionResult> PostMeal([FromBody] Meal meal)
+        public async Task<IActionResult> PostMeal([FromBody] MealModel model)
         {
-            if (!ModelState.IsValid)
+            var meal = new Meal()
             {
-                return BadRequest(ModelState);
+                CategoryId = model.CategoryId,
+                Name = model.Name,
+                Price = model.Price,
+                ImageURL = model.ImageURL,
+                Weight = model.Weight,
+                Description = model.Description
+            };
+            var mealExists = _context.Meals.FirstOrDefault(m => m.Name == meal.Name && m.Weight == meal.Weight);
+            if (mealExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Блюдо с таким названием и описанем уже существует" });
             }
-
             _context.Meals.Add(meal);
             await _context.SaveChangesAsync();
 
@@ -112,15 +125,10 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMeal([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var meal = await _context.Meals.FindAsync(id);
             if (meal == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Meal was not found"});
             }
 
             _context.Meals.Remove(meal);

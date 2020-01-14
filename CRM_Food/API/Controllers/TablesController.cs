@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class TablesController : ControllerBase
@@ -23,14 +26,15 @@ namespace API.Controllers
 
         // GET: api/Tables
         [HttpGet]
-        public IQueryable GetTables()
+        public IActionResult GetTables()
         {
             var tables = _context.Tables.Select(t => new
             {
                 id = t.Id,
-                name = t.Name
+                name = t.Name,
+                status = t.Status.ToString()
             });
-            return tables;
+            return Ok(tables);
         }
 
         // GET: api/Tables/5
@@ -46,7 +50,7 @@ namespace API.Controllers
 
             if (table == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Table was not found"});
             }
 
             return Ok(table);
@@ -63,7 +67,13 @@ namespace API.Controllers
 
             if (id != table.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Table id is not equal to id from route" });
+            }
+
+            var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name && t.Id != table.Id);
+            if (tableExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Стол с таким названием уже существует" });
             }
 
             _context.Entry(table).State = EntityState.Modified;
@@ -76,7 +86,7 @@ namespace API.Controllers
             {
                 if (!TableExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Table was not found" });
                 }
                 else
                 {
@@ -84,18 +94,22 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Tables
         [HttpPost]
-        public async Task<IActionResult> PostTable([FromBody] Table table)
+        public async Task<IActionResult> PostTable([FromBody] TableModel model)
         {
-            if (!ModelState.IsValid)
+            var table = new Table()
             {
-                return BadRequest(ModelState);
+                Name = model.Name
+            };
+            var tableExists = _context.Tables.FirstOrDefault(t => t.Name == table.Name);
+            if (tableExists != null)
+            {
+                return BadRequest(new { status = "error", message = "Стол с таким названием уже существует" });
             }
-
             _context.Tables.Add(table);
             await _context.SaveChangesAsync();
 
@@ -114,7 +128,7 @@ namespace API.Controllers
             var table = await _context.Tables.FindAsync(id);
             if (table == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Table was not found" });
             }
 
             _context.Tables.Remove(table);

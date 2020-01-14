@@ -9,25 +9,22 @@ namespace DataTier.Entities.Concrete
 {
     public class Order
     {
-        [JsonIgnore]
         public int Id { get; set; }
+        [Required(ErrorMessage = "Укажите Id официанта")]
         public int UserId { get; set; }
         [JsonIgnore]
         public User User { get; set; }
+        [Required(ErrorMessage = "Укажите Id стола")]
         public int TableId { get; set; }
         [JsonIgnore]
         public Table Table { get; set; }
-        private DateTime? dateTimeOrdered;
         [JsonIgnore]
-        public DateTime DateTimeOrdered
-        {
-            get { return dateTimeOrdered ?? DateTime.UtcNow; }
-            set { dateTimeOrdered = value; }
-        }
+        public DateTime DateTimeOrdered { get; set; }
         [JsonIgnore]
         public DateTime? DateTimeClosed { get; set; }
         [JsonIgnore]
         public OrderStatus OrderStatus { get; set; }
+        [JsonIgnore]
         public decimal TotalPrice { get; set; }
         public string Comment { get; set; }
         public ICollection<MealOrder> MealOrders { get; set; }

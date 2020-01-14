@@ -8,6 +8,7 @@ namespace DataTier.Entities.Abstract
     {
         Active = 0,
         NotActive = 1,
-        Cooked = 2
+        MealCooked = 2,
+        BarCooked = 3
     }
 }

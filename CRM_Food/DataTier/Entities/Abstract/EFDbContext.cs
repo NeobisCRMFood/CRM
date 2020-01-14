@@ -9,12 +9,12 @@ namespace DataTier.Entities.Abstract
     public class EFDbContext : DbContext
     {
         public DbSet<User> Users { get; set; }
-        public DbSet<Department> Departments { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Meal> Meals { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<MealOrder> MealOrders { get; set; }
+        public DbSet<Book> Books { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -26,7 +26,7 @@ namespace DataTier.Entities.Abstract
                 "Username=bomosrkc;" +
                 "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
                 );
-            //optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=FoodCRM;Trusted_Connection=True;");
+            //optionsBuilder.UseSqlServer(@"Server=.\SQLEXPRESS;Database=FoodCRM;Trusted_Connection=True;");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

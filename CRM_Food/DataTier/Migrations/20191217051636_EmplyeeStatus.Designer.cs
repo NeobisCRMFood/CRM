@@ -10,45 +10,54 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataTier.Migrations
 {
     [DbContext(typeof(EFDbContext))]
-    [Migration("20191028115959_Init")]
-    partial class Init
+    [Migration("20191217051636_EmplyeeStatus")]
+    partial class EmplyeeStatus
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
-                .HasAnnotation("ProductVersion", "2.1.11-servicing-32099")
+                .HasAnnotation("ProductVersion", "2.2.6-servicing-10079")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            modelBuilder.Entity("DataTier.Entities.Concrete.Book", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("BookDate");
+
+                    b.Property<string>("ClientName");
+
+                    b.Property<int>("MenQuantity");
+
+                    b.Property<string>("PhoneNumber");
+
+                    b.Property<int>("TableId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableId");
+
+                    b.ToTable("Books");
+                });
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int>("DepartmentId");
+                    b.Property<int>("Department");
+
+                    b.Property<string>("ImageURL");
 
                     b.Property<string>("Name")
                         .IsRequired();
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("DataTier.Entities.Concrete.Department", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Name")
-                        .IsRequired();
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("DataTier.Entities.Concrete.Meal", b =>
@@ -63,12 +72,14 @@ namespace DataTier.Migrations
 
                     b.Property<string>("ImageURL");
 
+                    b.Property<int>("MealStatus");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
                     b.Property<decimal>("Price");
 
-                    b.Property<int?>("Weight");
+                    b.Property<string>("Weight");
 
                     b.HasKey("Id");
 
@@ -83,9 +94,11 @@ namespace DataTier.Migrations
 
                     b.Property<int>("OrderId");
 
+                    b.Property<int>("FinishedQuantity");
+
                     b.Property<int>("MealOrderStatus");
 
-                    b.Property<int>("Quantity");
+                    b.Property<int>("OrderedQuantity");
 
                     b.HasKey("MealId", "OrderId");
 
@@ -127,8 +140,6 @@ namespace DataTier.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime?>("BookDate");
-
                     b.Property<string>("Name")
                         .IsRequired();
 
@@ -148,10 +159,14 @@ namespace DataTier.Migrations
 
                     b.Property<DateTime>("DateBorn");
 
+                    b.Property<string>("Email");
+
                     b.Property<string>("FirstName")
                         .IsRequired();
 
                     b.Property<string>("Gender");
+
+                    b.Property<string>("ImageURL");
 
                     b.Property<string>("LastName")
                         .IsRequired();
@@ -171,16 +186,18 @@ namespace DataTier.Migrations
 
                     b.Property<DateTime>("StartWorkDay");
 
+                    b.Property<int>("Status");
+
                     b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("DataTier.Entities.Concrete.Category", b =>
+            modelBuilder.Entity("DataTier.Entities.Concrete.Book", b =>
                 {
-                    b.HasOne("DataTier.Entities.Concrete.Department", "Department")
-                        .WithMany("Categories")
-                        .HasForeignKey("DepartmentId")
+                    b.HasOne("DataTier.Entities.Concrete.Table", "Table")
+                        .WithMany()
+                        .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

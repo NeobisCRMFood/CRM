@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
+using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
@@ -21,16 +24,17 @@ namespace API.Controllers
             _context = context;
         }
 
-        // GET: api/Categories
+        [Authorize(Roles = "cook, admin")]
         [HttpGet]
         public IQueryable GetCategories()
         {
             var categories = _context.Categories.Select(c => new
             {
-                Id = c.Id,
-                DepartmentId = c.DepartmentId,
-                DepartmentName = c.Department.Name,
-                Category = c.Name
+                id = c.Id,
+                departmentId = c.Department,
+                departmentName = c.Department.ToString(),
+                category = c.Name,
+                image = c.ImageURL
             });
             return categories;
         }
@@ -39,16 +43,11 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategory([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var category = await _context.Categories.FindAsync(id);
 
             if (category == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Category was not found"});
             }
 
             return Ok(category);
@@ -65,7 +64,13 @@ namespace API.Controllers
 
             if (id != category.Id)
             {
-                return BadRequest();
+                return BadRequest(new { status = "error", message = "Category id is not equal to id from route" });
+            }
+
+            var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name && c.Id != category.Id);
+            if (categoryExist != null)
+            {
+                return BadRequest(new { status = "error", message = "Категория с таким названием уже существует" });
             }
 
             _context.Entry(category).State = EntityState.Modified;
@@ -78,7 +83,7 @@ namespace API.Controllers
             {
                 if (!CategoryExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { status = "error", message = "Category was not found" });
                 }
                 else
                 {
@@ -86,18 +91,24 @@ namespace API.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { status = "success", message = "Changes was add" });
         }
 
         // POST: api/Categories
         [HttpPost]
-        public async Task<IActionResult> PostCategory([FromBody] Category category)
+        public async Task<IActionResult> PostCategory([FromBody] CategoryModel model)
         {
-            if (!ModelState.IsValid)
+            var category = new Category()
             {
-                return BadRequest(ModelState);
+                Name = model.Name,
+                Department = model.Department,
+                ImageURL = model.ImageURL
+            };
+            var categoryExist = _context.Categories.FirstOrDefault(c => c.Name == category.Name);
+            if (categoryExist != null)
+            {
+                return BadRequest(new { status = "error", message = "Категория с таким названием уже существует"});
             }
-
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
@@ -108,15 +119,10 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound();
+                return NotFound(new { status = "error", message = "Category was not found"});
             }
 
             _context.Categories.Remove(category);

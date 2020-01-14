@@ -1,33 +1,24 @@
 ﻿using DataTier.Entities.Abstract;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace DataTier.Entities.Concrete
+namespace API.Models
 {
-    public class Meal
-    { 
-        public int Id { get; set; }
+    public class MealModel
+    {
         public int CategoryId { get; set; }
-        [JsonIgnore]
-        public Category Category { get; set; }
         [Required(ErrorMessage = "Заполните название")]
         public string Name { get; set; }
         [Required(ErrorMessage = "Заполните описание")]
         public string Description { get; set; }
-        [Required(ErrorMessage = "Заполните цену")]
+        [Required(ErrorMessage = "Укажите цену")]
         public decimal Price { get; set; }
+        [Required(ErrorMessage = "Укажите вес или количество")]
         public string Weight { get; set; }
-        public MealStatus MealStatus { get; set; }
+        [Required(ErrorMessage = "Укажите ссылку на картинку")]
         public string ImageURL { get; set; }
-
-        [JsonIgnore]
-        public ICollection<MealOrder> MealOrders { get; set; }
-        public Meal()
-        {
-            MealOrders = new List<MealOrder>();
-        }
     }
 }

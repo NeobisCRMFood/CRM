@@ -1,23 +1,26 @@
 ﻿using API.Hubs;
 using API.Models;
 using DataTier.Entities.Abstract;
+using DataTier.Entities.Concrete;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "cook")]
+    //[Authorize(Roles = "barman")]
     [Route("api/[controller]")]
     [ApiController]
-    public class CookController : ControllerBase
+    public class BarmanController : ControllerBase
     {
         private readonly EFDbContext _context;
         private readonly IHubContext<FoodHub> _hubContext;
-        public CookController(EFDbContext context, IHubContext<FoodHub> hubContext)
+        public BarmanController(EFDbContext context, IHubContext<FoodHub> hubContext)
         {
             _context = context;
             _hubContext = hubContext;
@@ -47,7 +50,7 @@ namespace API.Controllers.ControllerWork
         public IActionResult ActiveOrders()
         {
             var orders = _context.Orders
-                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.BarCooked)
+                .Where(o => o.OrderStatus == OrderStatus.Active || o.OrderStatus == OrderStatus.MealCooked)
                 .Select(o => new
                 {
                     orderId = o.Id,
@@ -70,7 +73,7 @@ namespace API.Controllers.ControllerWork
 
         [Route("finishMeal")]
         [HttpPost]
-        public async Task<IActionResult> FinishMeal([FromBody] MealReadyModel model)
+        public async Task<IActionResult> EndMeal([FromBody] MealReadyModel model)
         {
             var mealOrder = _context.MealOrders
                 .Include(mo => mo.Order)
@@ -82,7 +85,7 @@ namespace API.Controllers.ControllerWork
             {
                 return NotFound(new { status = "error", message = "Заказ или блюдо не было найдено" });
             }
-            if (mealOrder.Meal.Category.Department != Department.Kitchen)
+            if (mealOrder.Meal.Category.Department != Department.Bar)
             {
                 return BadRequest(new { status = "error", message = "Вы можете завершать блюда только своего департамента" });
             }
@@ -115,25 +118,23 @@ namespace API.Controllers.ControllerWork
             var mealOrder = _context.MealOrders
                 .Include(mo => mo.Order)
                 .Include(mo => mo.Meal)
-                .Include(mo => mo.Meal.Category)
                 .FirstOrDefault(mo => mo.OrderId == model.OrderId && mo.MealId == model.MealId);
             if (mealOrder == null)
             {
                 return NotFound(new { status = "error", message = "Блюдо или заказ не были найдены" });
             }
-            if (mealOrder.Meal.Category.Department != Department.Kitchen)
+            if (mealOrder.Meal.Category.Department != Department.Bar)
             {
                 return BadRequest(new { status = "error", message = "Блюда должны быть вашего департамента" });
             }
             if (mealOrder.MealOrderStatus != MealOrderStatus.Ready && mealOrder.MealOrderStatus != MealOrderStatus.Freezed)
             {
-                int haveNoMeals = mealOrder.OrderedQuantity - mealOrder.FinishedQuantity;
                 mealOrder.MealOrderStatus = MealOrderStatus.Freezed;
                 var meal = _context.Meals.FirstOrDefault(m => m.Id == model.MealId);
                 meal.MealStatus = MealStatus.HaveNot;
                 await _context.SaveChangesAsync();
-                //string message = 
-                //    $"Не хватает ингредиентов на {haveNoMeals} порций " +
+                //string message =
+                //    $"Не хватает ингредиентов на {model.FreezedMeals} порций " +
                 //    $"Стол: {mealOrder.Order.Table.Name} " +
                 //    $"Блюдо: {mealOrder.Meal.Name}";
                 //await _hubContext.Clients.User(mealOrder.Order.UserId.ToString()).SendAsync($"Notify", message);
@@ -141,7 +142,6 @@ namespace API.Controllers.ControllerWork
             }
             return BadRequest(new { status = "error", message = "Блюда готовы, либо уже заморожены" });
         }
-
 
         [HttpPut("closeOrder/{id}")]
         public async Task<IActionResult> CloseOrder([FromRoute] int id)
@@ -153,9 +153,9 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
             if (order == null)
             {
-                return NotFound(new { status = "error", message = "аказ не был найден" });
+                return NotFound(new { status = 404, message = "Заказ не был найден" });
             }
-            order.OrderStatus = OrderStatus.MealCooked;
+            order.OrderStatus = OrderStatus.BarCooked;
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Заказ был закрыт" });
@@ -168,11 +168,11 @@ namespace API.Controllers.ControllerWork
             var meal = await _context.Meals.Include(m => m.Category).FirstOrDefaultAsync(m => m.Id == id);
             if (meal == null)
             {
-                return NotFound(new { status = "error", message = "Блюдо не было найдено" });
+                return NotFound(new { status = "error", message = "Напиток не был найден" });
             }
-            if (meal.Category.Department != Department.Kitchen)
+            if (meal.Category.Department != Department.Bar)
             {
-                return BadRequest(new { status = "error", message = "Повар не может менять статус блюд бара" });
+                return BadRequest(new { status = "error", message = "Бармен не может менять статус блюд кухни"});
             }
             if (meal.MealStatus == MealStatus.Have)
             {
@@ -180,10 +180,10 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
 
                 //string message = $"Ингредиентов для блюда {meal.Name} не осталось в наличии";
-                //var users = _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.cook);
-                //foreach (var item in users)
+                //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(User.Claims.FirstOrDefault(us => us.Type == "UserId").Value));
+                //if (user.Role == Role.admin || user.Role == Role.cook)
                 //{
-                //    await _hubContext.Clients.User(item.Id.ToString()).SendAsync($"Notify", message);
+                //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
                 //}
                 return Ok(meal);
             }
@@ -193,13 +193,17 @@ namespace API.Controllers.ControllerWork
                 await _context.SaveChangesAsync();
 
                 //string message = $"Ингредиенты для блюда {meal.Name} появились в наличии";
-                //var users = _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.cook);
-                //foreach (var item in users)
+                //var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(GetUserId()));
+                //if (user.Role == Role.admin || user.Role == Role.cook)
                 //{
-                //    await _hubContext.Clients.User(item.Id.ToString()).SendAsync($"Notify", message);
+                //    await _hubContext.Clients.User(user.Id.ToString()).SendAsync($"Notify", message);
                 //}
                 return Ok(meal);
             }
+        }
+        private int GetUserId()
+        {
+            return int.Parse(User.Claims.First(i => i.Type == "UserId").Value);
         }
     }
 }

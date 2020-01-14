@@ -1,4 +1,5 @@
 ﻿using API.Hubs;
+using API.Services;
 using DataTier.Entities.Abstract;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace API
@@ -22,17 +26,14 @@ namespace API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()
                        .AllowAnyMethod()
                        .AllowAnyHeader();
             }));
-
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -51,20 +52,30 @@ namespace API
                     };
                 });
             services.AddSignalR();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddJsonOptions(options =>
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
                 options.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
             });
-
             services.AddDbContext<EFDbContext>();
+            services.AddSingleton<IJobFactory, BookFactory>();
+            services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            services.AddSingleton<BookDeleter>();
+            services.AddSingleton(new JobSchedule(
+                jobType: typeof(BookDeleter),
+                cronExpression: "0/5 * * * * ?")); // run every 5 seconds));
+            services.AddSingleton<TableBooker>();
+            services.AddSingleton(new JobSchedule(
+                jobType: typeof(TableBooker),
+                cronExpression: "0/5 * * * * ?")); // run every 5 seconds));
+            services.AddHostedService<BookService>();
 
-            services.IoCCommonDataLibraryRegister();
+
 
             services.AddSwaggerGen(c =>
-               {
-                   c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
-               });
+            {
+                c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -81,16 +92,18 @@ namespace API
                 app.UseHsts();
             }
 
+            app.UseStaticFiles();
+
             app.UseHttpsRedirection();
-            app.UseSignalR(routes => 
+            app.UseSignalR(routes =>
             {
-                routes.MapHub<OrderHub>("/order");
+                routes.MapHub<FoodHub>("/order");
             });
             app.UseAuthentication();
             app.UseMvc();
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => 
+            app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Food CRM API");
             });
