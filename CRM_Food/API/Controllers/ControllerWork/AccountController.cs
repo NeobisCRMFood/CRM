@@ -25,7 +25,7 @@ namespace API.Controllers.ControllerWork
         {
             _context = context;
         }
-        
+
         [HttpPost]
         [Route("Login")]
         public async Task Token([FromBody] LoginModel authUser)

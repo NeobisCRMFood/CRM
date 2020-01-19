@@ -28,43 +28,24 @@ namespace API.Controllers.ControllerWork
             _context = context;
             _hubContext = hubContext;
         }
-        //[Route("getMeals")]
-        //[HttpGet]
-        //public IActionResult GetMeals()
-        //{
-        //var meals = _context.Meals.Select(m => new
-        //{
-        //    id = m.Id,
-        //    name = m.Name,
-        //    description = m.Description,
-        //    deprtmentId = m.Category.Department,
-        //    categoryId = m.CategoryId,
-        //    category = m.Category.Name,
-        //    price = m.Price,
-        //    weight = m.Weight,
-        //    status = m.MealStatus.ToString(),
-        //    image = m.ImageURL
-        //});
-        //    return Ok(meals);
-        //}
 
         [Route("getMeals")]
         [HttpGet]
-        public IEnumerable<> GetMeals([FromQuery] PaginationModel model)
+        public IEnumerable<AdminGetMeals> GetMeals([FromQuery] PaginationModel model)
         {
-            var source = (from meal in _context.Meals select meal).AsQueryable().Select(m => new
-             {
-                 id = m.Id,
-                 name = m.Name,
-                 description = m.Description,
-                 deprtmentId = m.Category.Department,
-                 categoryId = m.CategoryId,
-                 category = m.Category.Name,
-                 price = m.Price,
-                 weight = m.Weight,
-                 status = m.MealStatus.ToString(),
-                 image = m.ImageURL
-             });
+            var source = (from meal in _context.Meals select meal).AsQueryable().Select(m => new AdminGetMeals
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Description = m.Description,
+                DepartmentId = m.Category.Department,
+                CategoryId = m.CategoryId,
+                CategoryName = m.Category.Name,
+                Price = m.Price,
+                Weight = m.Weight,
+                MealStatus = m.MealStatus.ToString(),
+                ImageURL = m.ImageURL
+            });
 
             int count = source.Count();
 

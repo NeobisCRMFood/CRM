@@ -20,13 +20,21 @@ namespace DataTier.Entities.Abstract
         {
             optionsBuilder.UseNpgsql
                 (
-                "Host=satao.db.elephantsql.com;" +
+                "Host=localhost;" +
                 "Port=5432;" +
-                "Database=bomosrkc;" +
-                "Username=bomosrkc;" +
-                "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+                "Database=crm_cafe;" +
+                "Username=postgres;" +
+                "Password=Anime1610;"
                 );
-            //optionsBuilder.UseSqlServer(@"Server=.\SQLEXPRESS;Database=FoodCRM;Trusted_Connection=True;");
+
+            //optionsBuilder.UseNpgsql
+            //    (
+            //    "Host=satao.db.elephantsql.com;" +
+            //    "Port=5432;" +
+            //    "Database=bomosrkc;" +
+            //    "Username=bomosrkc;" +
+            //    "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+            //    );
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

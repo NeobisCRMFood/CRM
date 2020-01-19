@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Cors.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Quartz;
 using Quartz.Impl;
@@ -74,7 +75,7 @@ namespace API
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "API", Description = "Food CRM API" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Description = "Food CRM API" });
             });
         }
 
