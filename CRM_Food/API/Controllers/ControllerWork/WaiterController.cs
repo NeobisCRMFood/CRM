@@ -231,9 +231,9 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderModel model)
         {
-            if (model.MealOrders == null)
+            if (model.MealOrders.Count == 0)
             {
-                return BadRequest(new { status = "error", message = "Meals can't be null" });
+                return BadRequest(new { status = "error", message = "Список блюд не может быть пустым" });
             }
             if (TableIsNull(model.TableId))
             {
@@ -247,10 +247,6 @@ namespace API.Controllers.ControllerWork
                 Comment = model.Comment,
                 MealOrders = model.MealOrders
             };
-            if (order.MealOrders == null)
-            {
-                return BadRequest(new { status = "error", message = "Meals can't be null"});
-            }
             using (var transaction = _context.Database.BeginTransaction())
             {
                 order.DateTimeOrdered = DateTime.Now;
@@ -264,13 +260,13 @@ namespace API.Controllers.ControllerWork
                 }
                 if (ord.Table.Status == TableStatus.Busy || ord.Table.Status == TableStatus.Booked)
                 {
-                    return BadRequest(new { status = "error", message = "Table is busy or booked" });
+                    return BadRequest(new { status = "error", message = "Стол занят или забронирован" });
                 }
                 ord.Table.Status = TableStatus.Busy;
                 await _context.SaveChangesAsync();
                 transaction.Commit();
             }
-            return Ok(new { status = "success", message = "Order was created"});
+            return Ok(new { status = "success", message = "Заказ был создан"});
         }
 
         [Route("addMealsOrder")]
@@ -280,17 +276,17 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == model.OrderId);
             if (order == null)
             {
-                return NotFound(new { status = "error", message = "Order was not found" });
+                return NotFound(new { status = "error", message = "Заказ не был найден" });
             }
             if (GetUserId() != order.UserId)
             {
-                return BadRequest(new { staus = "error", message = "U can add meals only to own orders"});
+                return BadRequest(new { staus = "error", message = "Вы можете добавлять блюда только в свои заказы"});
             }
             foreach (var item in model.MealOrders)
             {
                 if (MealIsNull(item.MealId))
                 {
-                    return NotFound(new { status = "error", message = "Meal was not found in database" });
+                    return NotFound(new { status = "error", message = "Блюдо не было найдено в базе данных" });
                 }
                 var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == order.Id && mo.MealId == item.MealId);
                 if (mealOrder == null)
@@ -315,7 +311,7 @@ namespace API.Controllers.ControllerWork
             order.OrderStatus = OrderStatus.Active;
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return Ok(new { status = "success", message = "Meals was added to order" });
+            return Ok(new { status = "success", message = "Блюда были добавлены в заказ" });
         }
 
         [Route("deleteMealsOrder")]
@@ -325,22 +321,26 @@ namespace API.Controllers.ControllerWork
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == model.OrderId);
             if (order == null)
             {
-                return NotFound(new { status = "error", message = "Order was not found" });
+                return NotFound(new { status = "error", message = "Заказ не был найден" });
+            }
+            if (model.MealOrders.Count == 0)
+            {
+                return BadRequest(new { status = "error", message = "Список блюд не может быть пустым"});
             }
             if (GetUserId() != order.UserId)
             {
-                return BadRequest(new { staus = "error", message = "U can add meals only to own orders" });
+                return BadRequest(new { status = "error", message = "Вы можете удалять блюда только из своего заказа" });
             }
             foreach (var item in model.MealOrders)
             {
                 if (MealIsNull(item.MealId))
                 {
-                    return NotFound(new { status = "error", message = "Meal was not found in database" });
+                    return NotFound(new { status = "error", message = "Блюда не были найдены в базе данных" });
                 }
                 var mealOrder = _context.MealOrders.FirstOrDefault(mo => mo.OrderId == order.Id && mo.MealId == item.MealId);
                 if (mealOrder == null)
                 {
-                    return NotFound(new { status = "error", message = $"Meal {item.MealId} in Order {order.Id} is not exist" });
+                    return NotFound(new { status = "error", message = $"Блюдо {item.MealId} в заказе с id {order.Id} не существует" });
                 }
                 if (mealOrder.MealOrderStatus == MealOrderStatus.NotReady)
                 {
@@ -354,7 +354,7 @@ namespace API.Controllers.ControllerWork
                     }
                     else if (mealOrder.OrderedQuantity < item.DeleteQuantity)
                     {
-                        return BadRequest(new { status = "error", message = "Delete quantity can't be more than ordered quantity" });
+                        return BadRequest(new { status = "error", message = "Количество удаляемых порций не может быть выше чем количество заказанных" });
                     }
                     if (mealOrder.OrderedQuantity <= mealOrder.FinishedQuantity)
                     {
@@ -367,12 +367,12 @@ namespace API.Controllers.ControllerWork
                 }
                 else
                 {
-                    return BadRequest(new { status = "error", message = "This method can't delete meal from ready or freezed MealOrder. Use deleteFreezedMeals" });
+                    return BadRequest(new { status = "error", message = "Вы не можете удалять порции из готовых блюд или замороженных" });
                 }
             }
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return Ok(new { status = "success", message = "Meals was deleted from order" });
+            return Ok(new { status = "success", message = "Блюда были удалены из заказа" });
         }
 
         [Route("deleteFreezedMeals")]

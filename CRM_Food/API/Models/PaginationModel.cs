@@ -11,7 +11,7 @@ namespace API.Models
 
         public int PageNumber { get; set; } = 1;
 
-        public int pageSize { get; set; } = 10;
+        private int pageSize { get; set; } = 10;
 
         public int PageSize
         {

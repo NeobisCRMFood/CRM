@@ -11,6 +11,7 @@ namespace API.Models
     {
         public int TableId { get; set; }
         public string Comment { get; set; }
+        [Required(ErrorMessage = "Список блюд не может быть пустым")]
         public ICollection<MealOrder> MealOrders { get; set; }
         public CreateOrderModel()
         {
@@ -20,6 +21,7 @@ namespace API.Models
     public class AddMealOrderModel
     {
         public int OrderId { get; set; }
+        [Required(ErrorMessage = "Список блюд не может быть пустым")]
         public List<AddMealsModel> MealOrders { get; set; }
     }
 
