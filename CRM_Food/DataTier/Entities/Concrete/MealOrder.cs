@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace DataTier.Entities.Concrete
@@ -15,6 +16,7 @@ namespace DataTier.Entities.Concrete
         public int MealId { get; set; }
         [JsonIgnore]
         public Meal Meal { get; set; }
+        [Required(ErrorMessage = "Укажите количество порций")]
         public int OrderedQuantity { get; set; }
         [JsonIgnore]
         public int FinishedQuantity { get; set; }

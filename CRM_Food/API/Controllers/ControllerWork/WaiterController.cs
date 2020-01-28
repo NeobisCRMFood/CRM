@@ -40,6 +40,7 @@ namespace API.Controllers.ControllerWork
                     mealOrders = o.MealOrders.Select(mo => new
                     {
                         meal = mo.Meal.Name,
+                        sum = mo.Meal.Price * mo.OrderedQuantity,
                         status = mo.MealOrderStatus.ToString()
                     })
                 });
@@ -234,6 +235,10 @@ namespace API.Controllers.ControllerWork
             if (model.MealOrders.Count == 0)
             {
                 return BadRequest(new { status = "error", message = "Список блюд не может быть пустым" });
+            }
+            if (model.MealOrders.FirstOrDefault(mo => mo.OrderedQuantity == 0) != null)
+            {
+                return BadRequest(new { status = "error", message = "Количество порций не может быть равным нулю" });
             }
             if (TableIsNull(model.TableId))
             {
