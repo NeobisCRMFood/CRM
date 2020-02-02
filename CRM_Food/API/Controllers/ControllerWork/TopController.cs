@@ -327,8 +327,10 @@ namespace API.Controllers.ControllerWork
                 {
                     id = u.Id,
                     userName = u.LastName + " " + u.FirstName,
-                    sum = _context.MealOrders.Where(mo => mo.Order.UserId == u.Id)
-                    .Select(mo => mo.Order.TotalPrice)
+                    sum = _context.Orders
+                    .Where(o => o.UserId == u.Id)
+                    .Where(o => o.OrderStatus == OrderStatus.NotActive)
+                    .Select(o => o.TotalPrice)
                     .Sum()
                 }).OrderBy(mo => mo.sum);
             return Ok(waitersSumTop);

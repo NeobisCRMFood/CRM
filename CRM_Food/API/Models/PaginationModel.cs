@@ -7,7 +7,7 @@ namespace API.Models
 {
     public class PaginationModel
     {
-        const int MaxPageSize = 20;
+        const int MaxPageSize = 100;
 
         public int PageNumber { get; set; } = 1;
 
