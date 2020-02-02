@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Models;
+using API.Models.Statistic;
 using API.Week;
 using DataTier.Entities.Abstract;
 using DataTier.Entities.Concrete;
@@ -548,11 +549,26 @@ namespace API.Controllers.ControllerWork
 
         [Route("transactionHistory")]
         [HttpGet]
-        public IEnumerable<Order> LatestOrders([FromQuery] PaginationModel model)
+        public IActionResult LatestOrders([FromQuery] PaginationModel model)
         {
             var source = (from order in _context.Orders.Include(o => o.MealOrders).
                     OrderByDescending(o => o.DateTimeOrdered)
-                          select order).AsQueryable();
+                          select order).AsQueryable().Select(o => new
+                          {
+                              id = o.Id,
+                              userId = o.UserId,
+                              waiterName = o.User.FirstName + " " + o.User.LastName,
+                              comment = o.Comment,
+                              status = o.OrderStatus,
+                              tableId = o.TableId,
+                              totalPrice = o.TotalPrice,
+                              mealOrders = o.MealOrders.Select(mo => new 
+                              {
+                                mealId = mo.MealId,
+                                mealName = mo.Meal.Name,
+                                mo.OrderedQuantity
+                              })
+                          });
 
             int count = source.Count();
 
@@ -582,7 +598,7 @@ namespace API.Controllers.ControllerWork
 
             HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
 
-            return items;
+            return Ok(new {TotalPages, items });
         }
 
         [Route("bestWaiterLastMonth")]
@@ -642,13 +658,12 @@ namespace API.Controllers.ControllerWork
                {
                    m.Id,
                    m.Name,
-                   quantity = m.Price * m.MealOrders
-                   .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                   m.Price,
+                   finishedQuantity = m.MealOrders
                    .Where(mo => mo.MealId == m.Id)
-                   .Select(mo => mo.FinishedQuantity)
-                   .Sum()
-               })
-               .OrderByDescending(mo => mo.quantity);
+                   .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                   .Select(mo => mo.FinishedQuantity).Sum()
+               });
             return Ok(sumTop);
         }
 
@@ -738,13 +753,12 @@ namespace API.Controllers.ControllerWork
                {
                    m.Id,
                    m.Name,
-                   quantity = m.Price * m.MealOrders
-                   .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                   m.Price,
+                   finishedQuantity = m.MealOrders
                    .Where(mo => mo.MealId == m.Id)
-                   .Select(mo => mo.FinishedQuantity)
-                   .Sum()
-               })
-               .OrderByDescending(mo => mo.quantity);
+                   .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
+                   .Select(mo => mo.FinishedQuantity).Sum()
+               });
             return Ok(sumTop);
         }
 

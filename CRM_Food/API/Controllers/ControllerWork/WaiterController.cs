@@ -37,12 +37,14 @@ namespace API.Controllers.ControllerWork
                 {
                     id = o.Id,
                     tableName = o.Table.Name,
+                    sum = o.MealOrders.Select(mo => mo.Meal.Price * mo.OrderedQuantity).Sum(),
                     mealOrders = o.MealOrders.Select(mo => new
                     {
                         meal = mo.Meal.Name,
-                        sum = mo.Meal.Price * mo.OrderedQuantity,
+                        mo.OrderedQuantity,
                         status = mo.MealOrderStatus.ToString()
-                    })
+                    }),
+                    
                 });
             return Ok(orders);
         }

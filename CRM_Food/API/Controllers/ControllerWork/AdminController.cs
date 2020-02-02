@@ -110,7 +110,7 @@ namespace API.Controllers.ControllerWork
         [HttpGet]
         public IActionResult GetBooks()
         {
-            var books = _context.Books.Where(b => b.Table.Status == TableStatus.Booked).Select(b => new 
+            var books = _context.Books.Select(b => new 
             {
                 b.Id,
                 b.ClientName,

@@ -20,7 +20,8 @@ namespace API.Services
                     var books = _context.Books.Include(b => b.Table);
                     foreach (var book in books)
                     {
-                        if (book.BookDate >= DateTime.Now.AddMinutes(-30))
+                        TimeSpan ts = book.BookDate - DateTime.Now;
+                        if (ts.TotalMinutes <= 30)
                         {
                             book.Table.Status = TableStatus.Booked;
                         }

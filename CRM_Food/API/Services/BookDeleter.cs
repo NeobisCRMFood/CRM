@@ -20,7 +20,8 @@ namespace API.Services
                     var books = _context.Books.Include(b => b.Table);
                     foreach (var book in books)
                     {
-                        if (book.BookDate <= DateTime.Now.AddMinutes(30) && book.Table.Status == TableStatus.Booked)
+                        TimeSpan ts = DateTime.Now - book.BookDate;
+                        if ( ts.TotalMinutes >= 30 && book.Table.Status == TableStatus.Booked)
                         {
                             book.Table.Status = TableStatus.Free;
                             _context.Remove(book);
