@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "barman")]
+    [Authorize(Roles = "barman")]
     [Route("api/[controller]")]
     [ApiController]
     public class BarmanController : ControllerBase

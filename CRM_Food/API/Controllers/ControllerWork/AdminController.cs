@@ -31,20 +31,20 @@ namespace API.Controllers.ControllerWork
 
         [Route("getMeals")]
         [HttpGet]
-        public IEnumerable<AdminGetMeals> GetMeals([FromQuery] PaginationModel model)
+        public IActionResult GetMeals([FromQuery] PaginationModel model)
         {
-            var source = (from meal in _context.Meals select meal).AsQueryable().Select(m => new AdminGetMeals
+            var source = (from meal in _context.Meals select meal).AsQueryable().Select(m => new
             {
-                Id = m.Id,
-                Name = m.Name,
-                Description = m.Description,
+                id = m.Id,
+                name = m.Name,
+                description = m.Description,
                 DepartmentId = m.Category.Department,
-                CategoryId = m.CategoryId,
-                CategoryName = m.Category.Name,
-                Price = m.Price,
-                Weight = m.Weight,
-                MealStatus = m.MealStatus.ToString(),
-                ImageURL = m.ImageURL
+                categoryId = m.CategoryId,
+                categoryName = m.Category.Name,
+                price = m.Price,
+                weight = m.Weight,
+                mealStatus = m.MealStatus.ToString(),
+                imageURL = m.ImageURL
             });
 
             int count = source.Count();
@@ -75,7 +75,7 @@ namespace API.Controllers.ControllerWork
 
             HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
 
-            return items;
+            return Ok(items);
         }
 
         [Route("getWaiters")]
@@ -84,10 +84,10 @@ namespace API.Controllers.ControllerWork
         {
             var waiters = _context.Users.Where(u => u.Role == Role.waiter).Select(u => new
             {
-                id = u.Id,
+                u.Id,
                 name = u.LastName + " " + u.FirstName + " " + u.MiddleName,
-                login = u.Login,
-                password = u.Password
+                u.Login,
+                u.Password
             });
             return Ok(waiters);
         }
@@ -98,10 +98,10 @@ namespace API.Controllers.ControllerWork
         {
             var waiters = _context.Users.Where(u => u.Role == Role.waiter).Where(u => u.Status == EmployeeStatus.NotActive).Select(u => new
             {
-                id = u.Id,
+                u.Id,
                 name = u.LastName + " " + u.FirstName + " " + u.MiddleName,
-                login = u.Login,
-                password = u.Password
+                u.Login,
+                u.Password
             });
             return Ok(waiters);
         }
@@ -114,7 +114,7 @@ namespace API.Controllers.ControllerWork
             {
                 b.Id,
                 b.ClientName,
-                bookDate = b.BookDate,
+                b.BookDate,
                 b.MenQuantity,
                 b.TableId,
                 b.PhoneNumber
@@ -126,10 +126,6 @@ namespace API.Controllers.ControllerWork
         [HttpPost]
         public async Task<IActionResult> BookTable([FromBody] BookModel model)
         {
-            if (BookIsNull(model))
-            {
-                return BadRequest(new { status = "error", message = "Invalid Json model"});
-            }
             var table = _context.Tables.FirstOrDefault(t => t.Id == model.TableId);
             if (table == null)
             {
@@ -252,23 +248,6 @@ namespace API.Controllers.ControllerWork
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Блюда были успешно удалены" });
-        }
-
-        private bool DateIsNull(DateRange dateRange)
-        {
-            if (dateRange.StartDate <= DateTime.Parse("01.01.0001 0:00:00") || dateRange.EndDate <= DateTime.Parse("01.01.0001 0:00:00"))
-            {
-                return true;
-            }
-            return false;
-        }
-        private bool BookIsNull(BookModel model)
-        {
-            if (model.BookDate <= DateTime.Parse("01.01.0001 0:00:00") && model.TableId <= 0)
-            {
-                return true;
-            }
-            return false;
         }
     }
 }

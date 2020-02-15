@@ -23,6 +23,8 @@ namespace DataTier.Entities.Concrete
         public MealStatus MealStatus { get; set; }
         public string ImageURL { get; set; }
 
+        public decimal CostPrice { get; set; }
+
         [JsonIgnore]
         public ICollection<MealOrder> MealOrders { get; set; }
         public Meal()

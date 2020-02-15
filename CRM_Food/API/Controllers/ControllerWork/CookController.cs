@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers.ControllerWork
 {
-    //[Authorize(Roles = "cook")]
+    [Authorize(Roles = "cook")]
     [Route("api/[controller]")]
     [ApiController]
     public class CookController : ControllerBase
