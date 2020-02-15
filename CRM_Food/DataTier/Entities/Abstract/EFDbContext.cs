@@ -18,23 +18,23 @@ namespace DataTier.Entities.Abstract
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql
-                (
-                "Host=localhost;" +
-                "Port=5432;" +
-                "Database=crm_cafe;" +
-                "Username=postgres;" +
-                "Password=Anime1610;"
-                );
-
             //optionsBuilder.UseNpgsql
             //    (
-            //    "Host=satao.db.elephantsql.com;" +
+            //    "Host=localhost;" +
             //    "Port=5432;" +
-            //    "Database=bomosrkc;" +
-            //    "Username=bomosrkc;" +
-            //    "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+            //    "Database=crm_cafe;" +
+            //    "Username=postgres;" +
+            //    "Password=Anime1610;"
             //    );
+
+            optionsBuilder.UseNpgsql
+                (
+                "Host=satao.db.elephantsql.com;" +
+                "Port=5432;" +
+                "Database=bomosrkc;" +
+                "Username=bomosrkc;" +
+                "Password=g-MJuj8CrUKFgszpGzYGAs4AGXy-uGrP;"
+                );
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

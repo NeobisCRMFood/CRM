@@ -89,6 +89,23 @@ namespace API.Controllers.ControllerWork
             return Ok(new { statisctics, statiscticsToday, statiscticsWeek, statiscticsMonth });
         }
 
+        [Route("Income")]
+        [HttpGet]
+        public IActionResult Income()
+        {
+            var meals = _context.Meals.Select(m => new
+            {
+                m.Id,
+                m.Name,
+                income = 
+                m.Price * m.MealOrders.Where(mo => mo.MealId == m.Id).Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive).Select(mo => mo.FinishedQuantity).Sum() 
+                -
+                m.CostPrice * m.MealOrders.Where(mo => mo.MealId == m.Id).Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive).Select(mo => mo.FinishedQuantity).Sum()
+            });
+
+            return Ok(meals);
+        }
+
         [Route("totalSums")]
         [HttpGet]
         public async Task<IActionResult> TotalSum()
@@ -549,9 +566,11 @@ namespace API.Controllers.ControllerWork
 
         [Route("transactionHistory")]
         [HttpGet]
-        public IActionResult LatestOrders([FromQuery] PaginationModel model)
+        public IActionResult LatestOrders([FromQuery] DateTimePaginationModel model)
         {
-            var source = (from order in _context.Orders.Include(o => o.MealOrders).
+            if (model.StartDate == null || model.EndDate == null)
+            {
+                var source = (from order in _context.Orders.Include(o => o.MealOrders).
                     OrderByDescending(o => o.DateTimeOrdered)
                           select order).AsQueryable().Select(o => new
                           {
@@ -562,6 +581,7 @@ namespace API.Controllers.ControllerWork
                               status = o.OrderStatus,
                               tableId = o.TableId,
                               totalPrice = o.TotalPrice,
+                              orderDate = o.DateTimeOrdered,
                               mealOrders = o.MealOrders.Select(mo => new 
                               {
                                 mealId = mo.MealId,
@@ -569,36 +589,91 @@ namespace API.Controllers.ControllerWork
                                 mo.OrderedQuantity
                               })
                           });
+                int count = source.Count();
 
-            int count = source.Count();
+                int CurrentPage = model.PageNumber;
 
-            int CurrentPage = model.PageNumber;
+                int PageSize = model.PageSize;
 
-            int PageSize = model.PageSize;
+                int TotalCount = count;
 
-            int TotalCount = count;
+                int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
 
-            int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
+                var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
 
-            var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+                var previousPage = CurrentPage > 1 ? "Yes" : "No";
 
-            var previousPage = CurrentPage > 1 ? "Yes" : "No";
+                var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
 
-            var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
+                var paginationMetadata = new
+                {
+                    totalCount = TotalCount,
+                    pageSize = PageSize,
+                    currentPage = CurrentPage,
+                    totalPages = TotalPages,
+                    previousPage,
+                    nextPage
+                };
 
-            var paginationMetadata = new
+                HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+
+                return Ok(new { TotalPages, items });
+            }
+
+            else
             {
-                totalCount = TotalCount,
-                pageSize = PageSize,
-                currentPage = CurrentPage,
-                totalPages = TotalPages,
-                previousPage,
-                nextPage
-            };
+                var source = (from order in _context.Orders.Include(o => o.MealOrders).
+                    OrderByDescending(o => o.DateTimeOrdered)
+                              select order).AsQueryable()
+                              .Where(o => o.DateTimeOrdered >= model.StartDate && o.DateTimeOrdered <= model.EndDate)
+                              .Select(o => new
+                              {
+                                  id = o.Id,
+                                  userId = o.UserId,
+                                  waiterName = o.User.FirstName + " " + o.User.LastName,
+                                  comment = o.Comment,
+                                  status = o.OrderStatus,
+                                  tableId = o.TableId,
+                                  totalPrice = o.TotalPrice,
+                                  orderDate = o.DateTimeOrdered,
+                                  mealOrders = o.MealOrders.Select(mo => new
+                                  {
+                                      mealId = mo.MealId,
+                                      mealName = mo.Meal.Name,
+                                      mo.OrderedQuantity
+                                  })
+                              });
+                int count = source.Count();
 
-            HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+                int CurrentPage = model.PageNumber;
 
-            return Ok(new {TotalPages, items });
+                int PageSize = model.PageSize;
+
+                int TotalCount = count;
+
+                int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
+
+                var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+
+                var previousPage = CurrentPage > 1 ? "Yes" : "No";
+
+                var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
+
+                var paginationMetadata = new
+                {
+                    totalCount = TotalCount,
+                    pageSize = PageSize,
+                    currentPage = CurrentPage,
+                    totalPages = TotalPages,
+                    previousPage,
+                    nextPage
+                };
+
+                HttpContext.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+
+                return Ok(new { TotalPages, items });
+            }
+            
         }
 
         [Route("bestWaiterLastMonth")]
@@ -658,8 +733,7 @@ namespace API.Controllers.ControllerWork
                {
                    m.Id,
                    m.Name,
-                   m.Price,
-                   finishedQuantity = m.MealOrders
+                   sum = m.Price * m.MealOrders
                    .Where(mo => mo.MealId == m.Id)
                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
                    .Select(mo => mo.FinishedQuantity).Sum()
@@ -753,8 +827,7 @@ namespace API.Controllers.ControllerWork
                {
                    m.Id,
                    m.Name,
-                   m.Price,
-                   finishedQuantity = m.MealOrders
+                   sum = m.Price *  m.MealOrders
                    .Where(mo => mo.MealId == m.Id)
                    .Where(mo => mo.Order.OrderStatus == OrderStatus.NotActive)
                    .Select(mo => mo.FinishedQuantity).Sum()
